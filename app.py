@@ -12,7 +12,6 @@ from comparativa import tabla_equivalencias
 from receta import generar_receta_html
 from exportar_pdf import generar_pdf_bytes
 
-
 # Configuración de la página
 st.set_page_config(
     page_title="Calculadora CBD - Greenmed",
@@ -22,7 +21,7 @@ st.set_page_config(
 
 # Título principal
 st.title("💊 Calculadora de Dosis de CBD")
-st.subheader("Laboratorios Greenmed - Basado en posología de Epidiolex®")
+st.subheader("Laboratorios Greenmed - Basado en prospecto de Xpectra/Xatiplex")
 st.markdown("---")
 
 # Inicializar catálogo
@@ -134,7 +133,7 @@ with tab1:
             st.session_state.dosis_personalizada = float(dosis_por_kg)
     
     with col2:
-        st.header("📊 Información del Producto")
+        st.header("📊 Producto seleccionado")
         
         if producto:
             calculadora = CalculadoraCBD(producto)
@@ -162,74 +161,85 @@ with tab1:
         
         st.header("📋 Pauta de Administración")
         
-        col1, col2, col3 = st.columns(3)
+        # Mostrar solo la dosis seleccionada y su equivalente
+        col1, col2 = st.columns([1, 1])
         
         with col1:
-            st.metric(
-                "Dosis Diaria Total",
-                f"{pauta['dosis_diaria_mg']:.1f} mg",
-                help=f"{pauta['dosis_por_kg']:.1f} mg/kg/día"
-            )
-            st.metric(
-                "Dosis por Toma",
-                f"{pauta['dosis_por_toma_mg']:.2f} mg",
-                help=f"{tomas_por_dia} tomas al día"
-            )
+            st.markdown(f"""
+            **Dosis seleccionada:**
+            - {pauta['dosis_por_kg']:.1f} mg/kg/día
+            - {pauta['dosis_diaria_mg']:.1f} mg/día
+            - {pauta['dosis_por_toma_mg']:.2f} mg por toma
+            """)
+            
+            if "dosis_por_toma_gotas" in pauta:
+                st.markdown(f"""
+                **Administración:**
+                - {pauta['dosis_por_toma_ml']:.3f} ml
+                - {pauta['dosis_por_toma_gotas']:.1f} gotas
+                - {tomas_por_dia} veces al día
+                """)
+            else:
+                st.markdown(f"""
+                **Administración:**
+                - {pauta['dosis_por_toma_ml']:.3f} ml
+                - {tomas_por_dia} veces al día
+                """)
         
         with col2:
-            st.metric(
-                "Volumen por Toma",
-                f"{pauta['dosis_por_toma_ml']:.3f} ml"
-            )
+            # Mostrar la fila correspondiente del producto seleccionado en la tabla de equivalencias
+            st.markdown(f"**Producto seleccionado: {pauta['producto']}**")
+            
+            # Obtener la tabla de equivalencias
+            df_equivalencias, gotas = tabla_equivalencias()
+            
+            # Encontrar la fila correspondiente a la dosis en gotas (para Xpectra)
             if "dosis_por_toma_gotas" in pauta:
-                st.metric(
-                    "Gotas por Toma",
-                    f"{pauta['dosis_por_toma_gotas']:.1f} gotas"
-                )
+                # Si el producto es Xpectra, mostrar la fila de gotas
+                dosis_gotas = pauta['dosis_por_toma_gotas']
+                # Buscar la fila más cercana en la tabla
+                fila_cercana = None
+                for i, gota in enumerate(gotas):
+                    if abs(gota - dosis_gotas) < 1:  # Si está cerca
+                        fila_cercana = i
+                        break
+                
+                if fila_cercana is not None:
+                    st.dataframe(
+                        df_equivalencias.iloc[[fila_cercana]],
+                        use_container_width=True,
+                        hide_index=True,
+                        column_config={
+                            "Xpectra 10": st.column_config.TextColumn("Xpectra 10", width="small"),
+                            "Xatiplex 5": st.column_config.TextColumn("Xatiplex 5", width="small"),
+                            "Xatiplex 10": st.column_config.TextColumn("Xatiplex 10", width="small"),
+                            "Xatiplex 15": st.column_config.TextColumn("Xatiplex 15", width="small"),
+                            "Xatiplex 20": st.column_config.TextColumn("Xatiplex 20", width="small")
+                        }
+                    )
+                    # Resaltar el producto seleccionado
+                    st.success(f"✅ {pauta['producto']} - Dosis equivalente")
             else:
-                st.info("💉 Administrar con jeringa")
+                # Si es Xatiplex, mostrar la fila de ml equivalente
+                dosis_ml = pauta['dosis_por_toma_ml']
+                
+                # Para Xatiplex, mostramos la equivalencia en gotas de Xpectra
+                # Usamos la calculadora de Xpectra para convertir
+                xpectra = catalogo.get_producto("Xpectra 10")
+                calc_xpectra = CalculadoraCBD(xpectra)
+                gotas_equivalentes = calc_xpectra.convertir_a_gotas(pauta['dosis_por_toma_mg'])
+                
+                st.markdown(f"""
+                **Equivalencia en Xpectra 10:**
+                - {gotas_equivalentes:.1f} gotas
+                - {pauta['dosis_por_toma_ml']:.3f} ml de {pauta['producto']}
+                """)
         
-        with col3:
-            st.metric(
-                "Volumen Diario",
-                f"{pauta['ml_por_dia']:.2f} ml"
-            )
-            st.metric(
-                "Volumen Mensual (30 días)",
-                f"{pauta['ml_mensual']:.1f} ml"
-            )
-        
-        st.markdown("---")
-        st.subheader("📋 Instrucciones de Administración")
-        
-        tiene_gotas = "dosis_por_toma_gotas" in pauta
-        
-        instrucciones = f"""
-        **Producto:** {pauta['producto']} ({pauta['concentracion']}%, {pauta['tipo']})
-        
-        **Paciente:** {paciente_nombre if paciente_nombre else "No especificado"}
-        **Peso:** {peso} kg
-        
-        **Dosis prescrita:** {pauta['dosis_por_kg']:.1f} mg/kg/día = {pauta['dosis_diaria_mg']:.1f} mg totales/día
-        
-        **Administración:** {tomas_por_dia} veces al día (cada {24/tomas_por_dia:.0f} horas)
-        
-        **Por toma administrar:**
-        - {pauta['dosis_por_toma_mg']:.2f} mg de CBD
-        - {pauta['dosis_por_toma_ml']:.3f} ml
-        """
-        
-        if tiene_gotas:
-            instrucciones += f"\n        - {pauta['dosis_por_toma_gotas']:.1f} gotas"
-        
-        instrucciones += f"\n\n        **Presentación:** {pauta['presentacion']}"
-        
-        st.markdown(instrucciones)
-        
-        # Tabla de titulación
+        # Tabla de titulación simplificada
         with st.expander("📊 Ver esquema de titulación sugerido"):
             st.markdown("**Titulación semanal (Epidiolex®):**")
             
+            tiene_gotas = "dosis_por_toma_gotas" in pauta
             datos_titulacion = []
             for semana in range(1, 5):
                 dosis_semana = min(pauta['dosis_por_kg'], 2.5 * semana)
@@ -255,6 +265,29 @@ with tab1:
             
             df_titulacion = pd.DataFrame(datos_titulacion)
             st.dataframe(df_titulacion, use_container_width=True, hide_index=True)
+        
+        # Recomendaciones
+        st.divider()
+        st.subheader("⚠️ Recomendaciones Importantes")
+        
+        col_adv1, col_adv2 = st.columns(2)
+        
+        with col_adv1:
+            st.markdown("""
+            **📌 Titulación:**
+            - Iniciar con dosis baja (2.5 mg/kg/día)
+            - Aumentar gradualmente según tolerancia
+            - Evaluar respuesta clínica semanalmente
+            """)
+        
+        with col_adv2:
+            st.markdown("""
+            **⚠️ Monitorización:**
+            - Función hepática (transaminasas)
+            - Interacciones medicamentosas
+            - Efectos adversos (somnolencia, diarrea)
+            - Ajustar según tolerancia individual
+            """)
 
 with tab2:
     st.header("📊 Tabla de Equivalencias")
@@ -263,10 +296,8 @@ with tab2:
     Útil para convertir rápidamente entre productos.
     """)
     
-    # Generar tabla de equivalencias
     df_equivalencias, gotas = tabla_equivalencias()
     
-    # Mostrar tabla con estilo mejorado
     st.dataframe(
         df_equivalencias,
         use_container_width=True,
@@ -295,7 +326,6 @@ with tab2:
         }
     )
     
-    # Información adicional
     st.divider()
     col1, col2 = st.columns(2)
     
@@ -314,20 +344,6 @@ with tab2:
         - Isolado de CBD
         - Mayor precisión en la dosis
         """)
-    
-    # Ejemplo práctico
-    with st.expander("📖 Ver ejemplo de uso"):
-        st.markdown("""
-        **Ejemplo práctico:**
-        
-        Si el médico prescribe **10 gotas de Xpectra 10** y la farmacia solo tiene **Xatiplex 20**:
-        
-        1. Buscar en la tabla la columna "Xpectra 10" → fila "10 gotas"
-        2. Leer el valor en la columna "Xatiplex 20" → **0.16 mL**
-        3. Administrar **0.16 mL** de Xatiplex 20 con jeringa
-        
-        **Equivalencia:** 10 gotas de Xpectra 10 = 0.16 mL de Xatiplex 20
-        """)
 
 with tab3:
     st.header("📝 Receta Médica")
@@ -336,51 +352,43 @@ with tab3:
     luego agregue sus observaciones y genere la receta.
     """)
     
-    # Verificar que tenemos los datos necesarios
     if peso > 0 and producto:
-        # Calcular pauta
         calculadora = CalculadoraCBD(producto)
         pauta = calculadora.calcular_pauta_completa(peso, dosis_por_kg)
         pauta['paciente_nombre'] = paciente_nombre if paciente_nombre else "No especificado"
         
-        # Campo de observaciones
         st.subheader("📝 Observaciones")
         observaciones = st.text_area(
             "Escriba aquí sus observaciones, indicaciones adicionales o advertencias:",
             value=st.session_state.observaciones,
             height=100,
-            placeholder="Ej: Iniciar con dosis baja. Evaluar respuesta en 2 semanas. Contraindicado con warfarina.",
+            placeholder="Ej: Iniciar con dosis baja. Evaluar respuesta en 2 semanas.",
             key="observaciones_input"
         )
         st.session_state.observaciones = observaciones
         
-        # Botón para generar receta
         if st.button("🔄 Generar Receta", type="primary"):
             with st.spinner("Generando receta..."):
                 receta_html = generar_receta_html(pauta, observaciones)
                 st.session_state.receta_html = receta_html
                 st.session_state.receta_generada = True
         
-        # Mostrar receta si existe
         if st.session_state.get('receta_generada', False):
             st.divider()
             st.subheader("📋 Receta Generada")
             
-            # Mostrar HTML
             st.components.v1.html(
                 st.session_state.receta_html,
                 height=600,
                 scrolling=True
             )
             
-            # Botones de acción
             st.divider()
             st.subheader("📤 Exportar")
             
-            col1, col2, col3 = st.columns([1, 1, 2])
+            col1, col2 = st.columns(2)
             
             with col1:
-                # Descargar HTML
                 nombre_limpio = paciente_nombre.replace(' ', '_') if paciente_nombre else "paciente"
                 fecha_actual = datetime.now().strftime('%Y%m%d')
                 nombre_archivo_html = f"receta_{nombre_limpio}_{fecha_actual}.html"
@@ -394,7 +402,6 @@ with tab3:
                 )
             
             with col2:
-                # Descargar PDF
                 try:
                     pdf_bytes = generar_pdf_bytes(st.session_state.receta_html)
                     nombre_archivo_pdf = f"receta_{nombre_limpio}_{fecha_actual}.pdf"
@@ -409,12 +416,9 @@ with tab3:
                     )
                 except Exception as e:
                     st.error(f"Error al generar PDF: {e}")
-                    st.info("💡 Asegúrate de tener instalado weasyprint: pip install weasyprint")
-            
-            with col3:
-                st.info("💡 El PDF se puede compartir directamente con el paciente por email o WhatsApp.")
+                    st.info("💡 Asegúrate de tener instalado weasyprint")
     else:
-        st.warning("⚠️ Primero complete los datos del paciente y seleccione un producto en la pestaña 'Calculadora de Dosis'.")
+        st.warning("⚠️ Primero complete los datos del paciente y seleccione un producto.")
 
 # Footer
 st.divider()
@@ -422,6 +426,6 @@ st.markdown("""
 <div style="text-align: center; color: #666; font-size: 0.9rem;">
     <p>⚠️ Esta herramienta es de apoyo para profesionales de la salud.</p>
     <p>La decisión final de prescripción es responsabilidad del médico tratante.</p>
-    <p style="font-size: 0.8rem;">Greenmed | Basado en posología de Epidiolex® (FDA/EMA)</p>
+    <p style="font-size: 0.8rem;">Greenmed | Basado en prospecto de Xpectra/Xatiplex</p>
 </div>
 """, unsafe_allow_html=True)
