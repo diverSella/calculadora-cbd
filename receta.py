@@ -68,6 +68,11 @@ def generar_receta_html(pauta: Dict, observaciones: str = "", producto_recetado:
     else:
         cantidad_seleccionada = f"{pauta['dosis_por_toma_ml']:.3f} ml"
     
+    # Calcular dosis por envase
+    volumen_envase = pauta.get('volumen_envase', 30)
+    ml_por_toma = pauta['dosis_por_toma_ml']
+    dosis_por_envase = volumen_envase / ml_por_toma if ml_por_toma > 0 else 0
+    
     # Construir HTML
     fecha = datetime.now().strftime("%d/%m/%Y")
     
@@ -254,7 +259,13 @@ def generar_receta_html(pauta: Dict, observaciones: str = "", producto_recetado:
                 padding-top: 6px;
                 border-top: 1px solid #eee;
             }}
-            /* Responsive */
+            .info-extra {{
+                display: flex;
+                justify-content: space-between;
+                font-size: 12px;
+                color: #555;
+                margin-top: 4px;
+            }}
             @media print {{
                 body {{
                     padding: 0;
@@ -342,7 +353,7 @@ def generar_receta_html(pauta: Dict, observaciones: str = "", producto_recetado:
             <div class="dosis-principal">
                 <div class="producto">✅ {pauta['producto']} ({pauta['concentracion']}%)</div>
                 <div class="dosis">{cantidad_seleccionada} • {pauta['tomas_por_dia']} veces al día</div>
-                <div class="detalle">Presentación: {pauta['presentacion']}</div>
+                <div class="detalle">Presentación: {pauta['presentacion']} | Envase: {volumen_envase} mL</div>
             </div>
             
             <!-- EQUIVALENCIAS -->
@@ -379,8 +390,9 @@ def generar_receta_html(pauta: Dict, observaciones: str = "", producto_recetado:
                             </tr>
                         </tbody>
                     </table>
-                    <div style="font-size: 11px; color: #888; margin-top: 4px;">
-                        💡 El paciente debe usar SOLO UNO de estos productos.
+                    <div class="info-extra">
+                        <span>💡 El paciente debe usar SOLO UNO de estos productos.</span>
+                        <span>Envase: {volumen_envase} mL • {dosis_por_envase:.0f} dosis por envase</span>
                     </div>
                 </div>
             </div>

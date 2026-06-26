@@ -13,6 +13,7 @@ class Producto:
     tipo: str  # "Full Spectrum" o "Isolado"
     presentacion: str  # "Gotero" o "Jeringa"
     gotas_por_ml: Optional[int] = None  # Solo para goteros
+    volumenes_disponibles: List[int] = None  # Volúmenes en mL (ej: [10, 30])
     descripcion: str = ""
 
 class CatalogoProductos:
@@ -26,6 +27,7 @@ class CatalogoProductos:
                 tipo="Full Spectrum",
                 presentacion="Gotero",
                 gotas_por_ml=32,
+                volumenes_disponibles=[10, 30],
                 descripcion="CBD al 10% en base a resina full spectrum - Administración con gotero"
             ),
             "Xatiplex 5": Producto(
@@ -34,6 +36,7 @@ class CatalogoProductos:
                 tipo="Isolado",
                 presentacion="Jeringa",
                 gotas_por_ml=None,
+                volumenes_disponibles=[10, 30],
                 descripcion="CBD al 5% en base a isolado - Administración con jeringa"
             ),
             "Xatiplex 10": Producto(
@@ -42,6 +45,7 @@ class CatalogoProductos:
                 tipo="Isolado",
                 presentacion="Jeringa",
                 gotas_por_ml=None,
+                volumenes_disponibles=[10, 30],
                 descripcion="CBD al 10% en base a isolado - Administración con jeringa"
             ),
             "Xatiplex 15": Producto(
@@ -50,6 +54,7 @@ class CatalogoProductos:
                 tipo="Isolado",
                 presentacion="Jeringa",
                 gotas_por_ml=None,
+                volumenes_disponibles=[10, 30],
                 descripcion="CBD al 15% en base a isolado - Administración con jeringa"
             ),
             "Xatiplex 20": Producto(
@@ -58,6 +63,7 @@ class CatalogoProductos:
                 tipo="Isolado",
                 presentacion="Jeringa",
                 gotas_por_ml=None,
+                volumenes_disponibles=[10, 30],
                 descripcion="CBD al 20% en base a isolado - Administración con jeringa"
             )
         }
