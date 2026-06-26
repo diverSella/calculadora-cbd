@@ -8,10 +8,8 @@ import pandas as pd
 from datetime import datetime
 from productos import CatalogoProductos
 from calculos import CalculadoraCBD, validar_dosis
-from comparativa import tabla_equivalencias
 from receta import generar_receta_html
 from exportar_pdf import generar_pdf_bytes
-import os
 
 # Configuración de la página
 st.set_page_config(
@@ -113,8 +111,6 @@ catalogo = CatalogoProductos()
 # Inicializar variables en session_state
 if 'dosis_personalizada' not in st.session_state:
     st.session_state.dosis_personalizada = 5.0
-if 'dosis_comparativa' not in st.session_state:
-    st.session_state.dosis_comparativa = 50.0
 if 'observaciones' not in st.session_state:
     st.session_state.observaciones = ""
 if 'receta_generada' not in st.session_state:
@@ -267,7 +263,7 @@ with tab1:
         st.header("Pauta de Administración")
         
         # ============================================
-        # RECUADRO VERDE - Mensaje principal (nuevo)
+        # RECUADRO VERDE - Mensaje principal
         # ============================================
         tiene_gotas = "dosis_por_toma_gotas" in pauta
         
@@ -349,74 +345,75 @@ with tab1:
                 help=f"Cada {24/tomas_por_dia:.0f} horas"
             )
         
-        # Tabla de equivalencias vertical
+        # ============================================
+        # TABLA DE EQUIVALENCIAS - CALCULADA DINÁMICAMENTE
+        # ============================================
         st.divider()
         st.subheader("Equivalencias para esta dosis")
         st.markdown("Si el paciente no puede comprar el producto seleccionado, estas son las dosis equivalentes con otros productos:")
         
-        # Obtener la tabla de equivalencias completa
-        df_equivalencias, gotas = tabla_equivalencias()
+        # Obtener la dosis por toma en mg
+        mg_por_toma = pauta['dosis_por_toma_mg']
         
-        # Calcular la dosis en gotas de Xpectra
+        # Crear diccionario con todos los productos y sus equivalencias
+        productos_equivalencias = {}
+        
+        # Xpectra 10
         xpectra = catalogo.get_producto("Xpectra 10")
         calc_xpectra = CalculadoraCBD(xpectra)
-        mg_por_toma = pauta['dosis_por_toma_mg']
-        dosis_en_gotas = calc_xpectra.convertir_a_gotas(mg_por_toma)
-        
-        # Buscar la fila más cercana
-        fila_cercana = None
-        if dosis_en_gotas:
-            for i, gota in enumerate(gotas):
-                try:
-                    num_gotas = float(gota.split()[0])
-                    if abs(num_gotas - dosis_en_gotas) < 1.5:
-                        fila_cercana = i
-                        break
-                except:
-                    continue
-        
-        if fila_cercana is None and len(gotas) > 0:
-            fila_cercana = len(gotas) - 1
-        
-        if fila_cercana is not None:
-            fila_datos = df_equivalencias.iloc[fila_cercana]
-            
-            # Crear tabla vertical
-            productos_lista = ["Xpectra 10", "Xatiplex 5", "Xatiplex 10", "Xatiplex 15", "Xatiplex 20"]
-            cantidades = [
-                fila_datos["Xpectra 10"],
-                fila_datos["Xatiplex 5"],
-                fila_datos["Xatiplex 10"],
-                fila_datos["Xatiplex 15"],
-                fila_datos["Xatiplex 20"]
-            ]
-            
-            df_vertical = pd.DataFrame({
-                "Producto": productos_lista,
-                "Cantidad por toma": cantidades
-            })
-            
-            st.dataframe(
-                df_vertical,
-                use_container_width=True,
-                hide_index=True,
-                column_config={
-                    "Producto": st.column_config.TextColumn("Producto", width="medium"),
-                    "Cantidad por toma": st.column_config.TextColumn("Cantidad por toma", width="medium")
-                }
-            )
-            
-            # Resaltar el producto seleccionado
-            producto_seleccionado = pauta['producto']
-            st.markdown(f"""
-            <div class="equivalencia-resaltada">
-                <strong>✅ Producto seleccionado:</strong> {producto_seleccionado} 
-                <span style="color: #FF9800;">➡️</span> 
-                <strong>{fila_datos[producto_seleccionado]}</strong>
-            </div>
-            """, unsafe_allow_html=True)
+        gotas_xpectra = calc_xpectra.convertir_a_gotas(mg_por_toma)
+        if gotas_xpectra:
+            productos_equivalencias["Xpectra 10"] = f"{gotas_xpectra:.1f} gotas"
         else:
-            st.info("No se pudo encontrar la equivalencia exacta.")
+            productos_equivalencias["Xpectra 10"] = f"{calc_xpectra.convertir_a_ml(mg_por_toma):.3f} ml"
+        
+        # Xatiplex 5
+        xatiplex_5 = catalogo.get_producto("Xatiplex 5")
+        calc_5 = CalculadoraCBD(xatiplex_5)
+        productos_equivalencias["Xatiplex 5"] = f"{calc_5.convertir_a_ml(mg_por_toma):.3f} ml"
+        
+        # Xatiplex 10
+        xatiplex_10 = catalogo.get_producto("Xatiplex 10")
+        calc_10 = CalculadoraCBD(xatiplex_10)
+        productos_equivalencias["Xatiplex 10"] = f"{calc_10.convertir_a_ml(mg_por_toma):.3f} ml"
+        
+        # Xatiplex 15
+        xatiplex_15 = catalogo.get_producto("Xatiplex 15")
+        calc_15 = CalculadoraCBD(xatiplex_15)
+        productos_equivalencias["Xatiplex 15"] = f"{calc_15.convertir_a_ml(mg_por_toma):.3f} ml"
+        
+        # Xatiplex 20
+        xatiplex_20 = catalogo.get_producto("Xatiplex 20")
+        calc_20 = CalculadoraCBD(xatiplex_20)
+        productos_equivalencias["Xatiplex 20"] = f"{calc_20.convertir_a_ml(mg_por_toma):.3f} ml"
+        
+        # Crear DataFrame
+        df_equivalencias = pd.DataFrame({
+            "Producto": list(productos_equivalencias.keys()),
+            "Cantidad por toma": list(productos_equivalencias.values())
+        })
+        
+        # Mostrar tabla
+        st.dataframe(
+            df_equivalencias,
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "Producto": st.column_config.TextColumn("Producto", width="medium"),
+                "Cantidad por toma": st.column_config.TextColumn("Cantidad por toma", width="medium")
+            }
+        )
+        
+        # Resaltar el producto seleccionado
+        producto_seleccionado = pauta['producto']
+        cantidad_seleccionada = productos_equivalencias[producto_seleccionado]
+        st.markdown(f"""
+        <div class="equivalencia-resaltada">
+            <strong>✅ Producto seleccionado:</strong> {producto_seleccionado} 
+            <span style="color: #FF9800;">➡️</span> 
+            <strong>{cantidad_seleccionada}</strong>
+        </div>
+        """, unsafe_allow_html=True)
         
         # Recomendaciones
         st.divider()
@@ -448,10 +445,12 @@ with tab2:
     Útil para convertir rápidamente entre productos.
     """)
     
-    df_equivalencias, gotas = tabla_equivalencias()
+    # Mostrar tabla de equivalencias completa
+    from comparativa import tabla_equivalencias
+    df_equivalencias_completa, gotas = tabla_equivalencias()
     
     st.dataframe(
-        df_equivalencias,
+        df_equivalencias_completa,
         use_container_width=True,
         hide_index=True,
         column_config={
