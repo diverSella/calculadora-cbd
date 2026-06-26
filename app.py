@@ -10,7 +10,7 @@ from productos import CatalogoProductos
 from calculos import CalculadoraCBD, validar_dosis
 from comparativa import tabla_equivalencias
 from receta import generar_receta_html
-from exportar_pdf import generar_pdf_bytes
+
 
 # Configuración de la página
 st.set_page_config(
