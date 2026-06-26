@@ -19,10 +19,69 @@ st.set_page_config(
     layout="wide"
 )
 
-# Título principal
-st.title("💊 Calculadora de Dosis de CBD")
-st.subheader("Laboratorios Greenmed - Basado en prospecto de Xpectra/Xatiplex")
-st.markdown("---")
+# Estilos CSS para personalizar la apariencia
+st.markdown("""
+<style>
+    .main-header {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 10px 0;
+        border-bottom: 2px solid #2E7D32;
+        margin-bottom: 20px;
+    }
+    .main-header img {
+        max-height: 60px;
+    }
+    .main-header h1 {
+        color: #2E7D32;
+        margin: 0;
+        font-size: 2rem;
+    }
+    .main-header .subtitle {
+        color: #666;
+        font-size: 1rem;
+        margin: 0;
+    }
+    .product-card {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 5px solid #2E7D32;
+        margin-bottom: 15px;
+    }
+    .product-card img {
+        max-height: 80px;
+        margin-right: 15px;
+    }
+    .highlight-product {
+        background-color: #e8f5e9;
+        padding: 15px;
+        border-radius: 10px;
+        border: 2px solid #4CAF50;
+        margin-bottom: 20px;
+    }
+    .footer {
+        text-align: center;
+        color: #666;
+        font-size: 0.9rem;
+        padding-top: 20px;
+        border-top: 1px solid #ddd;
+        margin-top: 30px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Logo y título en cabecera - Usando el logo oficial de GreenMed
+st.markdown("""
+<div class="main-header">
+    <img src="https://greenmed.uy/logo.png" alt="GreenMed Logo" onerror="this.style.display='none'">
+    <div>
+        <h1>Calculadora de Dosis de CBD</h1>
+        <p class="subtitle">Laboratorios Greenmed - Basado en prospecto de Xpectra/Xatiplex</p>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 # Inicializar catálogo
 catalogo = CatalogoProductos()
@@ -41,7 +100,7 @@ if 'receta_html' not in st.session_state:
 
 # Sidebar - Datos del paciente
 with st.sidebar:
-    st.header("📋 Datos del Paciente")
+    st.header("Datos del Paciente")
     
     paciente_nombre = st.text_input("Nombre del paciente", placeholder="Ej: Juan Pérez")
     peso = st.number_input(
@@ -55,7 +114,7 @@ with st.sidebar:
     
     st.divider()
     
-    st.subheader("💊 Producto Greenmed")
+    st.subheader("Producto Greenmed")
     producto_nombre = st.selectbox(
         "Seleccione el producto",
         catalogo.listar_productos()
@@ -74,7 +133,7 @@ with st.sidebar:
     
     st.divider()
     
-    st.subheader("⚙️ Configuración")
+    st.subheader("Configuración")
     tomas_por_dia = st.selectbox(
         "Tomas por día",
         [1, 2, 3, 4],
@@ -83,21 +142,21 @@ with st.sidebar:
     )
 
 # Área principal - Pestañas
-tab1, tab2, tab3 = st.tabs(["📋 Calculadora de Dosis", "📊 Tabla de Equivalencias", "📝 Receta Médica"])
+tab1, tab2, tab3 = st.tabs(["Calculadora de Dosis", "Tabla de Equivalencias", "Receta Médica"])
 
 with tab1:
     col1, col2 = st.columns([2, 1])
     
     with col1:
-        st.header("🎯 Selección de Dosis")
+        st.header("Selección de Dosis")
         
         dosis_tipo = st.radio(
             "Tipo de dosis",
-            ["Dosis estándar (Epidiolex®)", "Dosis personalizada"],
+            ["Dosis estándar (Epidiolex)", "Dosis personalizada"],
             horizontal=True
         )
         
-        if dosis_tipo == "Dosis estándar (Epidiolex®)":
+        if dosis_tipo == "Dosis estándar (Epidiolex)":
             dosis_por_kg = st.select_slider(
                 "Dosis (mg/kg/día)",
                 options=[2.5, 5.0, 10.0, 15.0, 20.0],
@@ -105,7 +164,7 @@ with tab1:
             )
             
             st.info("""
-            **Rango terapéutico Epidiolex®:**
+            **Rango terapéutico Epidiolex:**
             - Dosis inicial: 2.5 mg/kg/día
             - Dosis de mantenimiento: 5-10 mg/kg/día
             - Dosis máxima: 20 mg/kg/día
@@ -133,9 +192,15 @@ with tab1:
             st.session_state.dosis_personalizada = float(dosis_por_kg)
     
     with col2:
-        st.header("📊 Producto seleccionado")
+        st.header("Producto seleccionado")
         
         if producto:
+            # Mostrar foto del producto según selección
+            if "Xpectra" in producto_nombre:
+                st.image("https://greenmed.uy/xpectra.png", caption="Xpectra 10", use_container_width=True)
+            else:
+                st.image("https://greenmed.uy/xatiplex.png", caption="Xatiplex", use_container_width=True)
+            
             calculadora = CalculadoraCBD(producto)
             st.metric("CBD por ml", f"{calculadora.mg_por_ml:.2f} mg")
             
@@ -143,7 +208,7 @@ with tab1:
                 st.metric("CBD por gota", f"{calculadora.mg_por_gota:.3f} mg")
                 st.metric("Gotas por ml", f"{producto.gotas_por_ml} gotas")
             else:
-                st.info("💉 Administración con jeringa - No aplican gotas")
+                st.info("Administración con jeringa - No aplican gotas")
     
     # Calcular y mostrar resultados
     if peso > 0 and producto:
@@ -152,17 +217,17 @@ with tab1:
         es_valido, mensaje_validacion = validar_dosis(dosis_por_kg, peso)
         
         if not es_valido:
-            st.error(f"⚠️ {mensaje_validacion}")
+            st.error(f" {mensaje_validacion}")
         else:
-            st.success(f"✅ {mensaje_validacion}")
+            st.success(f" {mensaje_validacion}")
         
         calculadora = CalculadoraCBD(producto)
         pauta = calculadora.calcular_pauta_completa(peso, dosis_por_kg)
         
-        st.header("📋 Pauta de Administración")
+        st.header("Pauta de Administración")
         
-        # Mostrar Dosis Seleccionada (grande)
-        st.subheader("💊 Dosis Seleccionada")
+        # Mostrar Dosis Seleccionada
+        st.subheader("Dosis Seleccionada")
         col1, col2, col3 = st.columns(3)
         with col1:
             st.metric(
@@ -183,8 +248,8 @@ with tab1:
                 help=f"{tomas_por_dia} veces al día"
             )
         
-        # Mostrar Administración (grande)
-        st.subheader("💉 Administración")
+        # Mostrar Administración
+        st.subheader("Administración")
         col1, col2, col3 = st.columns(3)
         with col1:
             if "dosis_por_toma_gotas" in pauta:
@@ -213,25 +278,33 @@ with tab1:
             )
         
         # Mostrar Producto Seleccionado (resaltado)
-        st.subheader("🎯 Producto Seleccionado")
+        st.subheader("Producto Seleccionado")
         
-        # Crear tarjeta resaltada para el producto seleccionado
+        # Crear tarjeta resaltada con foto del producto
         st.markdown(f"""
-        <div style="background-color: #e8f5e9; padding: 15px; border-radius: 10px; border: 2px solid #4CAF50; margin-bottom: 20px;">
-            <h3 style="color: #2E7D32; margin: 0;">✅ {pauta['producto']}</h3>
-            <p style="margin: 5px 0; font-size: 1.1rem;">
-                <strong>Concentración:</strong> {pauta['concentracion']}% | 
-                <strong>Presentación:</strong> {pauta['presentacion']}
-            </p>
-            <p style="margin: 5px 0; font-size: 1.1rem;">
-                <strong>Dosis por toma:</strong> {pauta['dosis_por_toma_ml']:.3f} ml
-                {f' | {pauta["dosis_por_toma_gotas"]:.1f} gotas' if "dosis_por_toma_gotas" in pauta else ''}
-            </p>
+        <div class="highlight-product">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <img src="https://greenmed.uy/{'xpectra' if 'Xpectra' in producto_nombre else 'xatiplex'}.png" 
+                     alt="{pauta['producto']}" 
+                     style="max-height: 80px;"
+                     onerror="this.style.display='none'">
+                <div>
+                    <h3 style="color: #2E7D32; margin: 0;"> {pauta['producto']}</h3>
+                    <p style="margin: 5px 0; font-size: 1.1rem;">
+                        <strong>Concentración:</strong> {pauta['concentracion']}% | 
+                        <strong>Presentación:</strong> {pauta['presentacion']}
+                    </p>
+                    <p style="margin: 5px 0; font-size: 1.1rem;">
+                        <strong>Dosis por toma:</strong> {pauta['dosis_por_toma_ml']:.3f} ml
+                        {f' | {pauta["dosis_por_toma_gotas"]:.1f} gotas' if "dosis_por_toma_gotas" in pauta else ''}
+                    </p>
+                </div>
+            </div>
         </div>
         """, unsafe_allow_html=True)
         
-        # Tabla de equivalencias vertical para la dosis seleccionada
-        st.subheader("📊 Equivalencias para esta dosis")
+        # Tabla de equivalencias vertical
+        st.subheader("Equivalencias para esta dosis")
         st.markdown("Si el paciente no puede comprar el producto seleccionado, estas son las dosis equivalentes con otros productos:")
         
         # Obtener la tabla de equivalencias completa
@@ -242,7 +315,6 @@ with tab1:
         if "dosis_por_toma_gotas" in pauta:
             dosis_gotas = pauta['dosis_por_toma_gotas']
         else:
-            # Si es Xatiplex, convertir a gotas equivalentes
             xpectra = catalogo.get_producto("Xpectra 10")
             calc_xpectra = CalculadoraCBD(xpectra)
             dosis_gotas = calc_xpectra.convertir_a_gotas(pauta['dosis_por_toma_mg'])
@@ -251,7 +323,7 @@ with tab1:
         fila_cercana = None
         if dosis_gotas:
             for i, gota in enumerate(gotas):
-                if abs(gota - dosis_gotas) < 0.5:  # Si está cerca
+                if abs(gota - dosis_gotas) < 0.5:
                     fila_cercana = i
                     break
                 elif gota > dosis_gotas:
@@ -259,40 +331,32 @@ with tab1:
                     break
         
         if fila_cercana is not None:
-            # Obtener la fila específica
             fila_datos = df_equivalencias.iloc[fila_cercana]
             
-            # Crear tabla vertical con dos columnas: Producto y Cantidad
-            productos = []
+            # Crear tabla vertical
+            productos_lista = []
             cantidades = []
             
-            # Xpectra 10
-            productos.append("Xpectra 10")
+            productos_lista.append("Xpectra 10")
             cantidades.append(f"{fila_datos['Xpectra 10']}")
             
-            # Xatiplex 5
-            productos.append("Xatiplex 5")
+            productos_lista.append("Xatiplex 5")
             cantidades.append(f"{fila_datos['Xatiplex 5']}")
             
-            # Xatiplex 10
-            productos.append("Xatiplex 10")
+            productos_lista.append("Xatiplex 10")
             cantidades.append(f"{fila_datos['Xatiplex 10']}")
             
-            # Xatiplex 15
-            productos.append("Xatiplex 15")
+            productos_lista.append("Xatiplex 15")
             cantidades.append(f"{fila_datos['Xatiplex 15']}")
             
-            # Xatiplex 20
-            productos.append("Xatiplex 20")
+            productos_lista.append("Xatiplex 20")
             cantidades.append(f"{fila_datos['Xatiplex 20']}")
             
-            # Crear DataFrame vertical
             df_vertical = pd.DataFrame({
-                "Producto": productos,
+                "Producto": productos_lista,
                 "Cantidad por toma": cantidades
             })
             
-            # Mostrar la tabla vertical
             st.dataframe(
                 df_vertical,
                 use_container_width=True,
@@ -309,19 +373,19 @@ with tab1:
                 }
             )
             
-            # Resaltar el producto seleccionado
+            # Resaltar producto seleccionado
             producto_seleccionado = pauta['producto']
             st.markdown(f"""
             <div style="background-color: #fff3e0; padding: 10px; border-radius: 5px; border-left: 5px solid #FF9800; margin-top: 10px;">
-                <strong>✅ Producto seleccionado:</strong> {producto_seleccionado} 
+                <strong> Producto seleccionado:</strong> {producto_seleccionado} 
                 <span style="color: #FF9800;">➡️</span> 
                 <strong>{fila_datos[producto_seleccionado]}</strong>
             </div>
             """, unsafe_allow_html=True)
         
-        # Tabla de titulación simplificada
-        with st.expander("📊 Ver esquema de titulación sugerido"):
-            st.markdown("**Titulación semanal (Epidiolex®):**")
+        # Tabla de titulación
+        with st.expander("Ver esquema de titulación sugerido"):
+            st.markdown("**Titulación semanal (Epidiolex):**")
             
             tiene_gotas = "dosis_por_toma_gotas" in pauta
             datos_titulacion = []
@@ -352,13 +416,13 @@ with tab1:
         
         # Recomendaciones
         st.divider()
-        st.subheader("⚠️ Recomendaciones Importantes")
+        st.subheader("Recomendaciones Importantes")
         
         col_adv1, col_adv2 = st.columns(2)
         
         with col_adv1:
             st.markdown("""
-            **📌 Titulación:**
+            **Titulación:**
             - Iniciar con dosis baja (2.5 mg/kg/día)
             - Aumentar gradualmente según tolerancia
             - Evaluar respuesta clínica semanalmente
@@ -366,7 +430,7 @@ with tab1:
         
         with col_adv2:
             st.markdown("""
-            **⚠️ Monitorización:**
+            **Monitorización:**
             - Función hepática (transaminasas)
             - Interacciones medicamentosas
             - Efectos adversos (somnolencia, diarrea)
@@ -374,7 +438,7 @@ with tab1:
             """)
 
 with tab2:
-    st.header("📊 Tabla de Equivalencias")
+    st.header("Tabla de Equivalencias")
     st.markdown("""
     Esta tabla muestra la correspondencia entre **gotas de Xpectra 10** y **ml de Xatiplex**.
     Útil para convertir rápidamente entre productos.
@@ -415,7 +479,7 @@ with tab2:
     
     with col1:
         st.markdown("""
-        **💊 Xpectra 10 (Gotero)**
+        **Xpectra 10 (Gotero)**
         - 32 gotas = 1 ml
         - Full Spectrum
         - Administración con gotero
@@ -423,14 +487,14 @@ with tab2:
     
     with col2:
         st.markdown("""
-        **💉 Xatiplex (Jeringa)**
+        **Xatiplex (Jeringa)**
         - Administración con jeringa
         - Isolado de CBD
         - Mayor precisión en la dosis
         """)
 
 with tab3:
-    st.header("📝 Receta Médica")
+    st.header("Receta Médica")
     st.markdown("""
     Complete los datos del paciente y la dosis en la pestaña **Calculadora de Dosis**,
     luego agregue sus observaciones y genere la receta.
@@ -441,7 +505,7 @@ with tab3:
         pauta = calculadora.calcular_pauta_completa(peso, dosis_por_kg)
         pauta['paciente_nombre'] = paciente_nombre if paciente_nombre else "No especificado"
         
-        st.subheader("📝 Observaciones")
+        st.subheader("Observaciones")
         observaciones = st.text_area(
             "Escriba aquí sus observaciones, indicaciones adicionales o advertencias:",
             value=st.session_state.observaciones,
@@ -451,7 +515,7 @@ with tab3:
         )
         st.session_state.observaciones = observaciones
         
-        if st.button("🔄 Generar Receta", type="primary"):
+        if st.button("Generar Receta", type="primary"):
             with st.spinner("Generando receta..."):
                 receta_html = generar_receta_html(pauta, observaciones)
                 st.session_state.receta_html = receta_html
@@ -459,7 +523,7 @@ with tab3:
         
         if st.session_state.get('receta_generada', False):
             st.divider()
-            st.subheader("📋 Receta Generada")
+            st.subheader("Receta Generada")
             
             st.components.v1.html(
                 st.session_state.receta_html,
@@ -468,7 +532,7 @@ with tab3:
             )
             
             st.divider()
-            st.subheader("📤 Exportar")
+            st.subheader("Exportar")
             
             col1, col2 = st.columns(2)
             
@@ -478,7 +542,7 @@ with tab3:
                 nombre_archivo_html = f"receta_{nombre_limpio}_{fecha_actual}.html"
                 
                 st.download_button(
-                    label="📄 Descargar HTML",
+                    label="Descargar HTML",
                     data=st.session_state.receta_html,
                     file_name=nombre_archivo_html,
                     mime="text/html",
@@ -491,7 +555,7 @@ with tab3:
                     nombre_archivo_pdf = f"receta_{nombre_limpio}_{fecha_actual}.pdf"
                     
                     st.download_button(
-                        label="📥 Descargar PDF",
+                        label="Descargar PDF",
                         data=pdf_bytes,
                         file_name=nombre_archivo_pdf,
                         mime="application/pdf",
@@ -500,16 +564,15 @@ with tab3:
                     )
                 except Exception as e:
                     st.error(f"Error al generar PDF: {e}")
-                    st.info("💡 Asegúrate de tener instalado weasyprint")
+                    st.info("Asegúrate de tener instalado weasyprint")
     else:
-        st.warning("⚠️ Primero complete los datos del paciente y seleccione un producto.")
+        st.warning("Primero complete los datos del paciente y seleccione un producto.")
 
 # Footer
-st.divider()
 st.markdown("""
-<div style="text-align: center; color: #666; font-size: 0.9rem;">
-    <p>⚠️ Esta herramienta es de apoyo para profesionales de la salud.</p>
+<div class="footer">
+    <p>Esta herramienta es de apoyo para profesionales de la salud.</p>
     <p>La decisión final de prescripción es responsabilidad del médico tratante.</p>
-    <p style="font-size: 0.8rem;">Greenmed | Basado en prospecto de Xpectra/Xatiplex</p>
+    <p>Greenmed | Basado en prospecto de Xpectra/Xatiplex</p>
 </div>
 """, unsafe_allow_html=True)
