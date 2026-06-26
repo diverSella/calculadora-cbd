@@ -10,6 +10,7 @@ from productos import CatalogoProductos
 from calculos import CalculadoraCBD, validar_dosis
 from receta import generar_receta_html
 from exportar_pdf import generar_pdf_bytes
+import os
 
 # Configuración de la página
 st.set_page_config(
@@ -66,12 +67,6 @@ st.markdown("""
         color: #666;
         margin: 5px 0 0 0;
     }
-    .info-grid {
-        background-color: #f8f9fa;
-        padding: 20px;
-        border-radius: 10px;
-        margin-top: 20px;
-    }
     .footer {
         text-align: center;
         color: #666;
@@ -87,23 +82,70 @@ st.markdown("""
         border-left: 5px solid #FF9800;
         margin-top: 10px;
     }
+    .product-image-container {
+        text-align: center;
+        padding: 10px;
+        background: #f5f5f5;
+        border-radius: 10px;
+        margin-bottom: 15px;
+    }
+    .product-image-container img {
+        max-width: 100%;
+        max-height: 200px;
+        border-radius: 5px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# Logo y título en cabecera
-try:
-    st.image("assets/images/logo-greenmed.png", width=80)
-except:
-    pass
+# ============================================
+# FUNCIÓN PARA MOSTRAR IMÁGENES
+# ============================================
+def mostrar_imagen(ruta_imagen, caption="", width=None):
+    """Intenta mostrar una imagen con manejo de errores"""
+    try:
+        if os.path.exists(ruta_imagen):
+            if width:
+                st.image(ruta_imagen, caption=caption, width=width)
+            else:
+                st.image(ruta_imagen, caption=caption, use_container_width=True)
+            return True
+        else:
+            st.warning(f"No se encontró la imagen: {ruta_imagen}")
+            return False
+    except Exception as e:
+        st.warning(f"Error al cargar la imagen: {e}")
+        return False
 
-st.markdown("""
-<div class="main-header">
-    <div>
-        <h1>Calculadora de Dosis de CBD</h1>
-        <p class="subtitle">Laboratorios Greenmed - Basado en prospecto de Xpectra/Xatiplex</p>
+# ============================================
+# LOGO Y CABECERA
+# ============================================
+# Intentar mostrar el logo
+col_logo, col_title = st.columns([1, 5])
+with col_logo:
+    # Probar diferentes nombres de logo
+    logo_paths = [
+        "assets/images/Logo empresa.JPG",
+        "assets/images/logo-empresa.JPG",
+        "assets/images/logo-greenmed.png"
+    ]
+    logo_cargado = False
+    for path in logo_paths:
+        if os.path.exists(path):
+            st.image(path, width=80)
+            logo_cargado = True
+            break
+    if not logo_cargado:
+        st.markdown("🌿")
+
+with col_title:
+    st.markdown("""
+    <div class="main-header">
+        <div>
+            <h1>Calculadora de Dosis de CBD</h1>
+            <p class="subtitle">Laboratorios Greenmed - Basado en prospecto de Xpectra/Xatiplex</p>
+        </div>
     </div>
-</div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
 # Inicializar catálogo
 catalogo = CatalogoProductos()
@@ -217,23 +259,33 @@ with tab1:
         if producto:
             # Mostrar foto del producto según selección
             if "Xpectra" in producto_nombre:
-                try:
-                    st.image("assets/images/xpectra-10.png", caption="Xpectra 10", use_container_width=True)
-                except:
+                st.markdown("""
+                <div class="product-image-container">
+                    <p style="font-size: 1.2rem; font-weight: bold;">Xpectra 10</p>
+                </div>
+                """, unsafe_allow_html=True)
+                # Intentar cargar la imagen
+                if not mostrar_imagen("assets/images/Xpectra_10.webp", "Xpectra 10"):
                     st.markdown("""
-                    <div style="text-align: center; padding: 10px; background: #f5f5f5; border-radius: 10px; margin-bottom: 15px;">
+                    <div style="text-align: center; padding: 20px; background: #f5f5f5; border-radius: 10px; margin-bottom: 15px;">
                         <p style="font-size: 3rem; margin: 0;">💊</p>
                         <p style="margin: 5px 0 0 0; font-weight: bold;">Xpectra 10</p>
+                        <p style="font-size: 0.8rem; color: #666;">10% - Full Spectrum</p>
                     </div>
                     """, unsafe_allow_html=True)
             else:
-                try:
-                    st.image("assets/images/xatiplex.png", caption="Xatiplex", use_container_width=True)
-                except:
+                st.markdown("""
+                <div class="product-image-container">
+                    <p style="font-size: 1.2rem; font-weight: bold;">Xatiplex</p>
+                </div>
+                """, unsafe_allow_html=True)
+                # Intentar cargar la imagen
+                if not mostrar_imagen("assets/images/xatiplex_5.webp", "Xatiplex"):
                     st.markdown("""
-                    <div style="text-align: center; padding: 10px; background: #f5f5f5; border-radius: 10px; margin-bottom: 15px;">
+                    <div style="text-align: center; padding: 20px; background: #f5f5f5; border-radius: 10px; margin-bottom: 15px;">
                         <p style="font-size: 3rem; margin: 0;">💉</p>
                         <p style="margin: 5px 0 0 0; font-weight: bold;">Xatiplex</p>
+                        <p style="font-size: 0.8rem; color: #666;">5%-20% - Isolado</p>
                     </div>
                     """, unsafe_allow_html=True)
             
