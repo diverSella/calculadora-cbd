@@ -25,8 +25,8 @@ def tabla_equivalencias():
     calc_xpectra = CalculadoraCBD(xpectra)
     mg_por_gota = calc_xpectra.mg_por_gota
     
-    # Definir las gotas a mostrar
-    gotas = [1, 2, 5, 10, 15, 20, 25, 30]
+    # Definir las gotas a mostrar (por toma)
+    gotas = [1, 2, 5, 10, 15, 20, 25, 30, 40, 50, 56, 60, 70, 80, 90, 100]
     
     # Calcular mg para cada cantidad de gotas
     mg_por_gotas = [gota * mg_por_gota for gota in gotas]
@@ -35,7 +35,7 @@ def tabla_equivalencias():
     datos = {}
     
     # Xpectra (primera fila - muestra gotas)
-    datos["Xpectra 10"] = [f"{g} gota{'s' if g > 1 else ''}" for g in gotas]
+    datos["Xpectra 10"] = [f"{g} gotas" for g in gotas]
     
     # Xatiplex 5
     calc_5 = CalculadoraCBD(xatiplex_5)
@@ -69,7 +69,7 @@ def mostrar_comparativa():
     print("=" * 80)
     print("TABLA DE EQUIVALENCIAS")
     print("=" * 80)
-    print("\n📊 Correspondencia entre gotas de Xpectra 10 y ml de Xatiplex")
+    print("\n📊 Correspondencia entre gotas de Xpectra 10 y ml de Xatiplex (por toma)")
     print(f"\n{df.to_string(index=False)}")
     
     print("\n" + "=" * 80)
@@ -77,6 +77,7 @@ def mostrar_comparativa():
     print("• Xpectra 10: 32 gotas/ml (Full Spectrum)")
     print("• Xatiplex: Administración con jeringa")
     print("• Los valores están redondeados a 2 decimales")
+    print("• Las dosis son por TOMA (cada 12 horas)")
     print("=" * 80)
 
 if __name__ == "__main__":
