@@ -230,7 +230,7 @@ with tab1:
         </div>
         """, unsafe_allow_html=True)
         
-        # Tabla de equivalencias para la dosis seleccionada
+        # Tabla de equivalencias vertical para la dosis seleccionada
         st.subheader("📊 Equivalencias para esta dosis")
         st.markdown("Si el paciente no puede comprar el producto seleccionado, estas son las dosis equivalentes con otros productos:")
         
@@ -262,44 +262,60 @@ with tab1:
             # Obtener la fila específica
             fila_datos = df_equivalencias.iloc[fila_cercana]
             
-            # Crear DataFrame con una sola fila
-            df_fila = pd.DataFrame([fila_datos])
+            # Crear tabla vertical con dos columnas: Producto y Cantidad
+            productos = []
+            cantidades = []
             
-            # Mostrar la tabla con la fila correspondiente
+            # Xpectra 10
+            productos.append("Xpectra 10")
+            cantidades.append(f"{fila_datos['Xpectra 10']}")
+            
+            # Xatiplex 5
+            productos.append("Xatiplex 5")
+            cantidades.append(f"{fila_datos['Xatiplex 5']}")
+            
+            # Xatiplex 10
+            productos.append("Xatiplex 10")
+            cantidades.append(f"{fila_datos['Xatiplex 10']}")
+            
+            # Xatiplex 15
+            productos.append("Xatiplex 15")
+            cantidades.append(f"{fila_datos['Xatiplex 15']}")
+            
+            # Xatiplex 20
+            productos.append("Xatiplex 20")
+            cantidades.append(f"{fila_datos['Xatiplex 20']}")
+            
+            # Crear DataFrame vertical
+            df_vertical = pd.DataFrame({
+                "Producto": productos,
+                "Cantidad por toma": cantidades
+            })
+            
+            # Mostrar la tabla vertical
             st.dataframe(
-                df_fila,
+                df_vertical,
                 use_container_width=True,
                 hide_index=True,
                 column_config={
-                    "Xpectra 10": st.column_config.TextColumn(
-                        "Xpectra 10 (10%)",
-                        help="Gotas de Xpectra 10 (32 gotas/ml)"
+                    "Producto": st.column_config.TextColumn(
+                        "Producto",
+                        width="medium"
                     ),
-                    "Xatiplex 5": st.column_config.TextColumn(
-                        "Xatiplex 5",
-                        help="ml de Xatiplex 5%"
-                    ),
-                    "Xatiplex 10": st.column_config.TextColumn(
-                        "Xatiplex 10",
-                        help="ml de Xatiplex 10%"
-                    ),
-                    "Xatiplex 15": st.column_config.TextColumn(
-                        "Xatiplex 15",
-                        help="ml de Xatiplex 15%"
-                    ),
-                    "Xatiplex 20": st.column_config.TextColumn(
-                        "Xatiplex 20",
-                        help="ml de Xatiplex 20%"
+                    "Cantidad por toma": st.column_config.TextColumn(
+                        "Cantidad por toma",
+                        width="medium"
                     )
                 }
             )
             
-            # Resaltar el producto seleccionado en la tabla
+            # Resaltar el producto seleccionado
+            producto_seleccionado = pauta['producto']
             st.markdown(f"""
             <div style="background-color: #fff3e0; padding: 10px; border-radius: 5px; border-left: 5px solid #FF9800; margin-top: 10px;">
-                <strong>💡 Producto seleccionado:</strong> {pauta['producto']} 
+                <strong>✅ Producto seleccionado:</strong> {producto_seleccionado} 
                 <span style="color: #FF9800;">➡️</span> 
-                <strong>{fila_datos[pauta['producto']]}</strong>
+                <strong>{fila_datos[producto_seleccionado]}</strong>
             </div>
             """, unsafe_allow_html=True)
         
