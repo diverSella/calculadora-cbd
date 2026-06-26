@@ -96,8 +96,8 @@ st.markdown("""
         border: 1px solid #e0e0e0;
     }
     .product-image-container img {
-        max-width: 50%;
-        max-height: 120px;
+        max-width: 180px;
+        max-height: 180px;
         object-fit: contain;
         border-radius: 5px;
         margin: 0 auto;
@@ -154,14 +154,14 @@ def mostrar_imagen_producto(producto_nombre, mg_por_ml, tiene_gotas, gotas_por_m
     # Iniciar el contenedor
     st.markdown('<div class="product-image-container">', unsafe_allow_html=True)
     
-    # Mostrar la imagen con st.image (ahora más pequeña)
+    # Mostrar la imagen con st.image (tamaño fijo para todas)
     imagen_mostrada = False
     if nombre_archivo:
         ruta_imagen = f"assets/images/{nombre_archivo}"
         if os.path.exists(ruta_imagen):
             try:
-                # Imagen más pequeña: use_container_width=False y width=150
-                st.image(ruta_imagen, width=150)
+                # Todas las imágenes con el mismo tamaño
+                st.image(ruta_imagen, width=180)
                 imagen_mostrada = True
             except Exception as e:
                 pass
@@ -286,7 +286,7 @@ with st.sidebar:
         with col2:
             st.metric("Presentación", producto.presentacion)
         
-        # Selector de volumen del envase (AHORA SÍ aparece)
+        # Selector de volumen del envase
         if producto.volumenes_disponibles:
             st.subheader("Volumen del envase")
             volumen_envase = st.radio(
@@ -406,7 +406,7 @@ with tab1:
         if tiene_gotas:
             mensaje_dosis = f"{pauta['dosis_por_toma_gotas']:.1f} gotas"
         else:
-            mensaje_dosis = f"{pauta['dosis_por_toma_ml']:.3f} ml"
+            mensaje_dosis = f"{pauta['dosis_por_toma_ml']:.1f} ml"
         
         # Texto de frecuencia
         if tomas_por_dia == 1:
