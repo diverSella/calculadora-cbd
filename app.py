@@ -161,79 +161,147 @@ with tab1:
         
         st.header("📋 Pauta de Administración")
         
-        # Mostrar solo la dosis seleccionada y su equivalente
-        col1, col2 = st.columns([1, 1])
-        
+        # Mostrar Dosis Seleccionada (grande)
+        st.subheader("💊 Dosis Seleccionada")
+        col1, col2, col3 = st.columns(3)
         with col1:
-            st.markdown(f"""
-            **Dosis seleccionada:**
-            - {pauta['dosis_por_kg']:.1f} mg/kg/día
-            - {pauta['dosis_diaria_mg']:.1f} mg/día
-            - {pauta['dosis_por_toma_mg']:.2f} mg por toma
-            """)
-            
-            if "dosis_por_toma_gotas" in pauta:
-                st.markdown(f"""
-                **Administración:**
-                - {pauta['dosis_por_toma_ml']:.3f} ml
-                - {pauta['dosis_por_toma_gotas']:.1f} gotas
-                - {tomas_por_dia} veces al día
-                """)
-            else:
-                st.markdown(f"""
-                **Administración:**
-                - {pauta['dosis_por_toma_ml']:.3f} ml
-                - {tomas_por_dia} veces al día
-                """)
-        
+            st.metric(
+                "Dosis por kg",
+                f"{pauta['dosis_por_kg']:.1f} mg/kg/día",
+                help="Dosis basada en el peso del paciente"
+            )
         with col2:
-            # Mostrar la fila correspondiente del producto seleccionado en la tabla de equivalencias
-            st.markdown(f"**Producto seleccionado: {pauta['producto']}**")
-            
-            # Obtener la tabla de equivalencias
-            df_equivalencias, gotas = tabla_equivalencias()
-            
-            # Encontrar la fila correspondiente a la dosis en gotas (para Xpectra)
+            st.metric(
+                "Dosis diaria total",
+                f"{pauta['dosis_diaria_mg']:.1f} mg",
+                help="Cantidad total de CBD por día"
+            )
+        with col3:
+            st.metric(
+                "Dosis por toma",
+                f"{pauta['dosis_por_toma_mg']:.2f} mg",
+                help=f"{tomas_por_dia} veces al día"
+            )
+        
+        # Mostrar Administración (grande)
+        st.subheader("💉 Administración")
+        col1, col2, col3 = st.columns(3)
+        with col1:
             if "dosis_por_toma_gotas" in pauta:
-                # Si el producto es Xpectra, mostrar la fila de gotas
-                dosis_gotas = pauta['dosis_por_toma_gotas']
-                # Buscar la fila más cercana en la tabla
-                fila_cercana = None
-                for i, gota in enumerate(gotas):
-                    if abs(gota - dosis_gotas) < 1:  # Si está cerca
-                        fila_cercana = i
-                        break
-                
-                if fila_cercana is not None:
-                    st.dataframe(
-                        df_equivalencias.iloc[[fila_cercana]],
-                        use_container_width=True,
-                        hide_index=True,
-                        column_config={
-                            "Xpectra 10": st.column_config.TextColumn("Xpectra 10", width="small"),
-                            "Xatiplex 5": st.column_config.TextColumn("Xatiplex 5", width="small"),
-                            "Xatiplex 10": st.column_config.TextColumn("Xatiplex 10", width="small"),
-                            "Xatiplex 15": st.column_config.TextColumn("Xatiplex 15", width="small"),
-                            "Xatiplex 20": st.column_config.TextColumn("Xatiplex 20", width="small")
-                        }
-                    )
-                    # Resaltar el producto seleccionado
-                    st.success(f"✅ {pauta['producto']} - Dosis equivalente")
+                st.metric(
+                    "Gotas por toma",
+                    f"{pauta['dosis_por_toma_gotas']:.1f} gotas",
+                    help="Si usa Xpectra 10 (gotero)"
+                )
             else:
-                # Si es Xatiplex, mostrar la fila de ml equivalente
-                dosis_ml = pauta['dosis_por_toma_ml']
-                
-                # Para Xatiplex, mostramos la equivalencia en gotas de Xpectra
-                # Usamos la calculadora de Xpectra para convertir
-                xpectra = catalogo.get_producto("Xpectra 10")
-                calc_xpectra = CalculadoraCBD(xpectra)
-                gotas_equivalentes = calc_xpectra.convertir_a_gotas(pauta['dosis_por_toma_mg'])
-                
-                st.markdown(f"""
-                **Equivalencia en Xpectra 10:**
-                - {gotas_equivalentes:.1f} gotas
-                - {pauta['dosis_por_toma_ml']:.3f} ml de {pauta['producto']}
-                """)
+                st.metric(
+                    "Volumen por toma",
+                    f"{pauta['dosis_por_toma_ml']:.3f} ml",
+                    help="Si usa Xatiplex (jeringa)"
+                )
+        with col2:
+            st.metric(
+                "Volumen por toma",
+                f"{pauta['dosis_por_toma_ml']:.3f} ml",
+                help="Volumen en ml por administración"
+            )
+        with col3:
+            st.metric(
+                "Tomas por día",
+                f"{tomas_por_dia} veces",
+                help=f"Cada {24/tomas_por_dia:.0f} horas"
+            )
+        
+        # Mostrar Producto Seleccionado (resaltado)
+        st.subheader("🎯 Producto Seleccionado")
+        
+        # Crear tarjeta resaltada para el producto seleccionado
+        st.markdown(f"""
+        <div style="background-color: #e8f5e9; padding: 15px; border-radius: 10px; border: 2px solid #4CAF50; margin-bottom: 20px;">
+            <h3 style="color: #2E7D32; margin: 0;">✅ {pauta['producto']}</h3>
+            <p style="margin: 5px 0; font-size: 1.1rem;">
+                <strong>Concentración:</strong> {pauta['concentracion']}% | 
+                <strong>Presentación:</strong> {pauta['presentacion']}
+            </p>
+            <p style="margin: 5px 0; font-size: 1.1rem;">
+                <strong>Dosis por toma:</strong> {pauta['dosis_por_toma_ml']:.3f} ml
+                {f' | {pauta["dosis_por_toma_gotas"]:.1f} gotas' if "dosis_por_toma_gotas" in pauta else ''}
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Tabla de equivalencias para la dosis seleccionada
+        st.subheader("📊 Equivalencias para esta dosis")
+        st.markdown("Si el paciente no puede comprar el producto seleccionado, estas son las dosis equivalentes con otros productos:")
+        
+        # Obtener la tabla de equivalencias completa
+        df_equivalencias, gotas = tabla_equivalencias()
+        
+        # Encontrar la fila correspondiente a la dosis
+        dosis_gotas = None
+        if "dosis_por_toma_gotas" in pauta:
+            dosis_gotas = pauta['dosis_por_toma_gotas']
+        else:
+            # Si es Xatiplex, convertir a gotas equivalentes
+            xpectra = catalogo.get_producto("Xpectra 10")
+            calc_xpectra = CalculadoraCBD(xpectra)
+            dosis_gotas = calc_xpectra.convertir_a_gotas(pauta['dosis_por_toma_mg'])
+        
+        # Buscar la fila más cercana en la tabla
+        fila_cercana = None
+        if dosis_gotas:
+            for i, gota in enumerate(gotas):
+                if abs(gota - dosis_gotas) < 0.5:  # Si está cerca
+                    fila_cercana = i
+                    break
+                elif gota > dosis_gotas:
+                    fila_cercana = i
+                    break
+        
+        if fila_cercana is not None:
+            # Obtener la fila específica
+            fila_datos = df_equivalencias.iloc[fila_cercana]
+            
+            # Crear DataFrame con una sola fila
+            df_fila = pd.DataFrame([fila_datos])
+            
+            # Mostrar la tabla con la fila correspondiente
+            st.dataframe(
+                df_fila,
+                use_container_width=True,
+                hide_index=True,
+                column_config={
+                    "Xpectra 10": st.column_config.TextColumn(
+                        "Xpectra 10 (10%)",
+                        help="Gotas de Xpectra 10 (32 gotas/ml)"
+                    ),
+                    "Xatiplex 5": st.column_config.TextColumn(
+                        "Xatiplex 5",
+                        help="ml de Xatiplex 5%"
+                    ),
+                    "Xatiplex 10": st.column_config.TextColumn(
+                        "Xatiplex 10",
+                        help="ml de Xatiplex 10%"
+                    ),
+                    "Xatiplex 15": st.column_config.TextColumn(
+                        "Xatiplex 15",
+                        help="ml de Xatiplex 15%"
+                    ),
+                    "Xatiplex 20": st.column_config.TextColumn(
+                        "Xatiplex 20",
+                        help="ml de Xatiplex 20%"
+                    )
+                }
+            )
+            
+            # Resaltar el producto seleccionado en la tabla
+            st.markdown(f"""
+            <div style="background-color: #fff3e0; padding: 10px; border-radius: 5px; border-left: 5px solid #FF9800; margin-top: 10px;">
+                <strong>💡 Producto seleccionado:</strong> {pauta['producto']} 
+                <span style="color: #FF9800;">➡️</span> 
+                <strong>{fila_datos[pauta['producto']]}</strong>
+            </div>
+            """, unsafe_allow_html=True)
         
         # Tabla de titulación simplificada
         with st.expander("📊 Ver esquema de titulación sugerido"):
