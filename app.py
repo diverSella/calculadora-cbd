@@ -46,10 +46,33 @@ st.markdown("""
     }
     .highlight-product {
         background-color: #e8f5e9;
-        padding: 15px;
+        padding: 20px;
         border-radius: 10px;
         border: 2px solid #4CAF50;
         margin-bottom: 20px;
+        text-align: center;
+    }
+    .highlight-product .producto-nombre {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #2E7D32;
+        margin: 0;
+    }
+    .highlight-product .producto-dosis {
+        font-size: 1.4rem;
+        color: #333;
+        margin: 10px 0 0 0;
+    }
+    .highlight-product .producto-detalle {
+        font-size: 1rem;
+        color: #666;
+        margin: 5px 0 0 0;
+    }
+    .info-grid {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 20px;
     }
     .footer {
         text-align: center;
@@ -69,24 +92,16 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Función para mostrar imágenes con fallback
-def mostrar_imagen(url_local, url_web, alt_text):
-    """Intenta mostrar una imagen local, si no, usa la URL web"""
-    if os.path.exists(url_local):
-        st.image(url_local, caption=alt_text, use_container_width=True)
-    else:
-        st.markdown(f"""
-        <div style="text-align: center; padding: 20px; background: #f5f5f5; border-radius: 10px; margin-bottom: 15px;">
-            <p style="color: #999; font-size: 0.9rem;">{alt_text}</p>
-            <p style="font-weight: bold; font-size: 1.2rem;">{alt_text}</p>
-        </div>
-        """, unsafe_allow_html=True)
-
 # Logo y título en cabecera
+try:
+    st.image("assets/images/logo-greenmed.png", width=80)
+except:
+    pass
+
 st.markdown("""
 <div class="main-header">
     <div>
-        <h1>🌿 Calculadora de Dosis de CBD</h1>
+        <h1>Calculadora de Dosis de CBD</h1>
         <p class="subtitle">Laboratorios Greenmed - Basado en prospecto de Xpectra/Xatiplex</p>
     </div>
 </div>
@@ -206,21 +221,25 @@ with tab1:
         if producto:
             # Mostrar foto del producto según selección
             if "Xpectra" in producto_nombre:
-                st.markdown("""
-                <div style="text-align: center; padding: 10px; background: #f5f5f5; border-radius: 10px; margin-bottom: 15px;">
-                    <p style="font-size: 3rem; margin: 0;">💊</p>
-                    <p style="margin: 5px 0 0 0; font-weight: bold;">Xpectra 10</p>
-                    <p style="font-size: 0.8rem; color: #666;">Gotero - 32 gotas/ml</p>
-                </div>
-                """, unsafe_allow_html=True)
+                try:
+                    st.image("assets/images/xpectra-10.png", caption="Xpectra 10", use_container_width=True)
+                except:
+                    st.markdown("""
+                    <div style="text-align: center; padding: 10px; background: #f5f5f5; border-radius: 10px; margin-bottom: 15px;">
+                        <p style="font-size: 3rem; margin: 0;">💊</p>
+                        <p style="margin: 5px 0 0 0; font-weight: bold;">Xpectra 10</p>
+                    </div>
+                    """, unsafe_allow_html=True)
             else:
-                st.markdown("""
-                <div style="text-align: center; padding: 10px; background: #f5f5f5; border-radius: 10px; margin-bottom: 15px;">
-                    <p style="font-size: 3rem; margin: 0;">💉</p>
-                    <p style="margin: 5px 0 0 0; font-weight: bold;">Xatiplex</p>
-                    <p style="font-size: 0.8rem; color: #666;">Jeringa</p>
-                </div>
-                """, unsafe_allow_html=True)
+                try:
+                    st.image("assets/images/xatiplex.png", caption="Xatiplex", use_container_width=True)
+                except:
+                    st.markdown("""
+                    <div style="text-align: center; padding: 10px; background: #f5f5f5; border-radius: 10px; margin-bottom: 15px;">
+                        <p style="font-size: 3rem; margin: 0;">💉</p>
+                        <p style="margin: 5px 0 0 0; font-weight: bold;">Xatiplex</p>
+                    </div>
+                    """, unsafe_allow_html=True)
             
             calculadora = CalculadoraCBD(producto)
             st.metric("CBD por ml", f"{calculadora.mg_por_ml:.2f} mg")
@@ -247,8 +266,40 @@ with tab1:
         
         st.header("Pauta de Administración")
         
-        # Mostrar Dosis Seleccionada
-        st.subheader("Dosis Seleccionada")
+        # ============================================
+        # RECUADRO VERDE - Mensaje principal (nuevo)
+        # ============================================
+        tiene_gotas = "dosis_por_toma_gotas" in pauta
+        
+        # Construir el mensaje principal
+        if tiene_gotas:
+            mensaje_dosis = f"{pauta['dosis_por_toma_gotas']:.1f} gotas"
+        else:
+            mensaje_dosis = f"{pauta['dosis_por_toma_ml']:.3f} ml"
+        
+        # Texto de frecuencia
+        if tomas_por_dia == 1:
+            frecuencia = "una vez al día"
+        elif tomas_por_dia == 2:
+            frecuencia = "dos veces al día (cada 12 horas)"
+        elif tomas_por_dia == 3:
+            frecuencia = "tres veces al día (cada 8 horas)"
+        else:
+            frecuencia = f"{tomas_por_dia} veces al día"
+        
+        st.markdown(f"""
+        <div class="highlight-product">
+            <p class="producto-nombre">✅ {pauta['producto']} ({pauta['concentracion']}%)</p>
+            <p class="producto-dosis">{mensaje_dosis} {frecuencia}</p>
+            <p class="producto-detalle">Presentación: {pauta['presentacion']}</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # ============================================
+        # INFORMACIÓN DETALLADA (debajo del recuadro)
+        # ============================================
+        st.subheader("Detalles de la Dosis")
+        
         col1, col2, col3 = st.columns(3)
         with col1:
             st.metric(
@@ -270,10 +321,16 @@ with tab1:
             )
         
         # Mostrar Administración
-        st.subheader("Administración")
+        st.subheader("Detalles de Administración")
         col1, col2, col3 = st.columns(3)
         with col1:
-            if "dosis_por_toma_gotas" in pauta:
+            st.metric(
+                "Volumen por toma",
+                f"{pauta['dosis_por_toma_ml']:.3f} ml",
+                help="Volumen en ml por administración"
+            )
+        with col2:
+            if tiene_gotas:
                 st.metric(
                     "Gotas por toma",
                     f"{pauta['dosis_por_toma_gotas']:.1f} gotas",
@@ -285,12 +342,6 @@ with tab1:
                     f"{pauta['dosis_por_toma_ml']:.3f} ml",
                     help="Si usa Xatiplex (jeringa)"
                 )
-        with col2:
-            st.metric(
-                "Volumen por toma",
-                f"{pauta['dosis_por_toma_ml']:.3f} ml",
-                help="Volumen en ml por administración"
-            )
         with col3:
             st.metric(
                 "Tomas por día",
@@ -298,57 +349,24 @@ with tab1:
                 help=f"Cada {24/tomas_por_dia:.0f} horas"
             )
         
-        # Mostrar Producto Seleccionado (resaltado)
-        st.subheader("Producto Seleccionado")
-        
-        # Crear tarjeta resaltada con foto del producto
-        st.markdown(f"""
-        <div class="highlight-product">
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <div style="font-size: 3rem;">
-                    {'💊' if 'Xpectra' in producto_nombre else '💉'}
-                </div>
-                <div>
-                    <h3 style="color: #2E7D32; margin: 0;">✅ {pauta['producto']}</h3>
-                    <p style="margin: 5px 0; font-size: 1.1rem;">
-                        <strong>Concentración:</strong> {pauta['concentracion']}% | 
-                        <strong>Presentación:</strong> {pauta['presentacion']}
-                    </p>
-                    <p style="margin: 5px 0; font-size: 1.1rem;">
-                        <strong>Dosis por toma:</strong> {pauta['dosis_por_toma_ml']:.3f} ml
-                        {f' | {pauta["dosis_por_toma_gotas"]:.1f} gotas' if "dosis_por_toma_gotas" in pauta else ''}
-                    </p>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
         # Tabla de equivalencias vertical
+        st.divider()
         st.subheader("Equivalencias para esta dosis")
         st.markdown("Si el paciente no puede comprar el producto seleccionado, estas son las dosis equivalentes con otros productos:")
         
         # Obtener la tabla de equivalencias completa
         df_equivalencias, gotas = tabla_equivalencias()
         
-        # DEBUG: Mostrar información para diagnóstico
-        # st.write("DEBUG - Gotas disponibles:", gotas)
-        # st.write("DEBUG - DataFrame:", df_equivalencias)
-        
         # Calcular la dosis en gotas de Xpectra
         xpectra = catalogo.get_producto("Xpectra 10")
         calc_xpectra = CalculadoraCBD(xpectra)
-        
-        # Obtener la dosis en mg por toma
         mg_por_toma = pauta['dosis_por_toma_mg']
-        
-        # Convertir a gotas de Xpectra
         dosis_en_gotas = calc_xpectra.convertir_a_gotas(mg_por_toma)
         
         # Buscar la fila más cercana
         fila_cercana = None
         if dosis_en_gotas:
             for i, gota in enumerate(gotas):
-                # Extraer el número de gotas del string (ej: "10 gotas" -> 10)
                 try:
                     num_gotas = float(gota.split()[0])
                     if abs(num_gotas - dosis_en_gotas) < 1.5:
@@ -357,14 +375,13 @@ with tab1:
                 except:
                     continue
         
-        # Si no encontró una fila exacta, usar la última fila disponible
         if fila_cercana is None and len(gotas) > 0:
             fila_cercana = len(gotas) - 1
         
         if fila_cercana is not None:
             fila_datos = df_equivalencias.iloc[fila_cercana]
             
-            # Crear tabla vertical con 5 filas
+            # Crear tabla vertical
             productos_lista = ["Xpectra 10", "Xatiplex 5", "Xatiplex 10", "Xatiplex 15", "Xatiplex 20"]
             cantidades = [
                 fila_datos["Xpectra 10"],
@@ -374,13 +391,11 @@ with tab1:
                 fila_datos["Xatiplex 20"]
             ]
             
-            # Crear DataFrame
             df_vertical = pd.DataFrame({
                 "Producto": productos_lista,
                 "Cantidad por toma": cantidades
             })
             
-            # Mostrar tabla
             st.dataframe(
                 df_vertical,
                 use_container_width=True,
@@ -401,12 +416,7 @@ with tab1:
             </div>
             """, unsafe_allow_html=True)
         else:
-            # Fallback: mostrar un mensaje si no se encuentra la fila
-            st.info("No se pudo encontrar la equivalencia exacta. Por favor, revise la tabla completa.")
-            
-            # Mostrar tabla completa como fallback
-            df_equivalencias_fallback = df_equivalencias.copy()
-            st.dataframe(df_equivalencias_fallback, use_container_width=True, hide_index=True)
+            st.info("No se pudo encontrar la equivalencia exacta.")
         
         # Recomendaciones
         st.divider()
