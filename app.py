@@ -96,10 +96,12 @@ st.markdown("""
         border: 1px solid #e0e0e0;
     }
     .product-image-container img {
-        max-width: 100%;
-        max-height: 160px;
+        max-width: 50%;
+        max-height: 120px;
         object-fit: contain;
         border-radius: 5px;
+        margin: 0 auto;
+        display: block;
     }
     .product-image-container .product-name {
         font-size: 1.1rem;
@@ -128,20 +130,13 @@ st.markdown("""
         color: #2E7D32;
         margin: 12px 0 8px 0;
     }
-    /* Métricas más pequeñas */
-    .metric-small .stMetric {
-        font-size: 0.9rem;
-    }
-    .metric-small .stMetric .stMetricValue {
-        font-size: 1.2rem !important;
-    }
 </style>
 """, unsafe_allow_html=True)
 
 # ============================================
 # FUNCIÓN PARA MOSTRAR IMÁGENES
 # ============================================
-def mostrar_imagen_producto(producto_nombre, mg_por_ml, tiene_gotas, gotas_por_ml=None, mg_por_gota=None):
+def mostrar_imagen_producto(producto_nombre, mg_por_ml, tiene_gotas, gotas_por_ml=None, mg_por_gota=None, volumen=None):
     """Muestra la imagen del producto con sus detalles debajo"""
     
     # Mapeo de productos a nombres de archivo
@@ -159,13 +154,14 @@ def mostrar_imagen_producto(producto_nombre, mg_por_ml, tiene_gotas, gotas_por_m
     # Iniciar el contenedor
     st.markdown('<div class="product-image-container">', unsafe_allow_html=True)
     
-    # Mostrar la imagen con st.image
+    # Mostrar la imagen con st.image (ahora más pequeña)
     imagen_mostrada = False
     if nombre_archivo:
         ruta_imagen = f"assets/images/{nombre_archivo}"
         if os.path.exists(ruta_imagen):
             try:
-                st.image(ruta_imagen, use_container_width=True)
+                # Imagen más pequeña: use_container_width=False y width=150
+                st.image(ruta_imagen, width=150)
                 imagen_mostrada = True
             except Exception as e:
                 pass
@@ -173,7 +169,7 @@ def mostrar_imagen_producto(producto_nombre, mg_por_ml, tiene_gotas, gotas_por_m
     # Si no se pudo mostrar la imagen, usar emoji
     if not imagen_mostrada:
         emoji = '💊' if 'Xpectra' in producto_nombre else '💉'
-        st.markdown(f'<div style="font-size: 3rem; padding: 20px 0;">{emoji}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div style="font-size: 2.5rem; padding: 10px 0;">{emoji}</div>', unsafe_allow_html=True)
     
     # Nombre del producto
     st.markdown(f'<div class="product-name">{producto_nombre}</div>', unsafe_allow_html=True)
@@ -201,6 +197,14 @@ def mostrar_imagen_producto(producto_nombre, mg_por_ml, tiene_gotas, gotas_por_m
         </div>
         <div class="product-detail">
             <span style="color: #666; font-size: 0.85rem;">No aplican gotas</span>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Mostrar volumen seleccionado
+    if volumen:
+        st.markdown(f"""
+        <div class="product-detail">
+            <strong>Envase:</strong> <span class="value">{volumen} mL</span>
         </div>
         """, unsafe_allow_html=True)
     
@@ -248,6 +252,8 @@ if 'receta_generada' not in st.session_state:
     st.session_state.receta_generada = False
 if 'receta_html' not in st.session_state:
     st.session_state.receta_html = ""
+if 'volumen_envase' not in st.session_state:
+    st.session_state.volumen_envase = 30
 
 # Sidebar - Datos del paciente
 with st.sidebar:
@@ -279,6 +285,18 @@ with st.sidebar:
             st.metric("Concentración", f"{producto.concentracion}%")
         with col2:
             st.metric("Presentación", producto.presentacion)
+        
+        # Selector de volumen del envase (AHORA SÍ aparece)
+        if producto.volumenes_disponibles:
+            st.subheader("Volumen del envase")
+            volumen_envase = st.radio(
+                "Seleccione el volumen",
+                producto.volumenes_disponibles,
+                index=1 if 30 in producto.volumenes_disponibles else 0,
+                help="Seleccione el volumen del frasco",
+                horizontal=True
+            )
+            st.session_state.volumen_envase = volumen_envase
         
         st.info(f"**Descripción:** {producto.descripcion}")
     
@@ -359,7 +377,8 @@ with tab1:
                 mg_por_ml, 
                 tiene_gotas,
                 gotas_por_ml,
-                mg_por_gota
+                mg_por_gota,
+                st.session_state.volumen_envase
             )
     
     # Calcular y mostrar resultados
@@ -403,7 +422,7 @@ with tab1:
         <div class="highlight-product">
             <p class="producto-nombre">✅ {pauta['producto']} ({pauta['concentracion']}%)</p>
             <p class="producto-dosis">{mensaje_dosis} {frecuencia}</p>
-            <p class="producto-detalle">Presentación: {pauta['presentacion']}</p>
+            <p class="producto-detalle">Presentación: {pauta['presentacion']} | Envase: {st.session_state.volumen_envase} mL</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -434,11 +453,17 @@ with tab1:
         
         # Mostrar Administración
         st.markdown('<p class="section-subtitle">Detalles de Administración</p>', unsafe_allow_html=True)
-        col1, col2, col3 = st.columns(3)
+        
+        # Calcular dosis por envase
+        volumen_envase = st.session_state.volumen_envase
+        ml_por_toma = pauta['dosis_por_toma_ml']
+        dosis_por_envase = volumen_envase / ml_por_toma if ml_por_toma > 0 else 0
+        
+        col1, col2, col3, col4 = st.columns(4)
         with col1:
             st.metric(
                 "Volumen por toma",
-                f"{pauta['dosis_por_toma_ml']:.3f}",
+                f"{ml_por_toma:.3f}",
                 help="ml"
             )
         with col2:
@@ -451,7 +476,7 @@ with tab1:
             else:
                 st.metric(
                     "Volumen por toma",
-                    f"{pauta['dosis_por_toma_ml']:.3f}",
+                    f"{ml_por_toma:.3f}",
                     help="ml"
                 )
         with col3:
@@ -459,6 +484,12 @@ with tab1:
                 "Tomas por día",
                 f"{tomas_por_dia}",
                 help=f"Cada {24/tomas_por_dia:.0f} horas"
+            )
+        with col4:
+            st.metric(
+                "Dosis por envase",
+                f"{dosis_por_envase:.0f}",
+                help=f"dosis en envase de {volumen_envase} mL"
             )
         
         # ============================================
@@ -623,6 +654,7 @@ with tab3:
         calculadora = CalculadoraCBD(producto)
         pauta = calculadora.calcular_pauta_completa(peso, dosis_por_kg)
         pauta['paciente_nombre'] = paciente_nombre if paciente_nombre else "No especificado"
+        pauta['volumen_envase'] = st.session_state.volumen_envase
         
         st.subheader("Observaciones")
         observaciones = st.text_area(
