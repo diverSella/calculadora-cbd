@@ -19,7 +19,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Estilos CSS para personalizar la apariencia
+# Estilos CSS personalizados
 st.markdown("""
 <style>
     .main-header {
@@ -72,10 +72,11 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Logo y título en cabecera - Usando el logo oficial de GreenMed
+# Logo y título en cabecera - Usando imágenes locales
 st.markdown("""
 <div class="main-header">
-    <img src="https://greenmed.uy/logo.png" alt="GreenMed Logo" onerror="this.style.display='none'">
+    <img src="https://greenmed.uy/images/logo.png" alt="GreenMed Logo" 
+         onerror="this.onerror=null; this.src='https://greenmed.uy/logo.png';">
     <div>
         <h1>Calculadora de Dosis de CBD</h1>
         <p class="subtitle">Laboratorios Greenmed - Basado en prospecto de Xpectra/Xatiplex</p>
@@ -197,9 +198,25 @@ with tab1:
         if producto:
             # Mostrar foto del producto según selección
             if "Xpectra" in producto_nombre:
-                st.image("https://greenmed.uy/xpectra.png", caption="Xpectra 10", use_container_width=True)
+                st.markdown("""
+                <div style="text-align: center; padding: 10px; background: #f5f5f5; border-radius: 10px; margin-bottom: 15px;">
+                    <img src="https://greenmed.uy/images/xpectra-10.png" 
+                         alt="Xpectra 10" 
+                         style="max-width: 100%; max-height: 150px;"
+                         onerror="this.onerror=null; this.src='https://greenmed.uy/xpectra.png';">
+                    <p style="margin: 5px 0 0 0; font-weight: bold;">Xpectra 10</p>
+                </div>
+                """, unsafe_allow_html=True)
             else:
-                st.image("https://greenmed.uy/xatiplex.png", caption="Xatiplex", use_container_width=True)
+                st.markdown("""
+                <div style="text-align: center; padding: 10px; background: #f5f5f5; border-radius: 10px; margin-bottom: 15px;">
+                    <img src="https://greenmed.uy/images/xatiplex.png" 
+                         alt="Xatiplex" 
+                         style="max-width: 100%; max-height: 150px;"
+                         onerror="this.onerror=null; this.src='https://greenmed.uy/xatiplex.png';">
+                    <p style="margin: 5px 0 0 0; font-weight: bold;">Xatiplex</p>
+                </div>
+                """, unsafe_allow_html=True)
             
             calculadora = CalculadoraCBD(producto)
             st.metric("CBD por ml", f"{calculadora.mg_por_ml:.2f} mg")
@@ -284,10 +301,10 @@ with tab1:
         st.markdown(f"""
         <div class="highlight-product">
             <div style="display: flex; align-items: center; gap: 15px;">
-                <img src="https://greenmed.uy/{'xpectra' if 'Xpectra' in producto_nombre else 'xatiplex'}.png" 
+                <img src="https://greenmed.uy/images/{'xpectra-10' if 'Xpectra' in producto_nombre else 'xatiplex'}.png" 
                      alt="{pauta['producto']}" 
                      style="max-height: 80px;"
-                     onerror="this.style.display='none'">
+                     onerror="this.onerror=null; this.src='https://greenmed.uy/{'xpectra' if 'Xpectra' in producto_nombre else 'xatiplex'}.png';">
                 <div>
                     <h3 style="color: #2E7D32; margin: 0;"> {pauta['producto']}</h3>
                     <p style="margin: 5px 0; font-size: 1.1rem;">
@@ -333,47 +350,34 @@ with tab1:
         if fila_cercana is not None:
             fila_datos = df_equivalencias.iloc[fila_cercana]
             
-            # Crear tabla vertical
-            productos_lista = []
-            cantidades = []
+            # Crear tabla vertical con 5 filas
+            productos_lista = ["Xpectra 10", "Xatiplex 5", "Xatiplex 10", "Xatiplex 15", "Xatiplex 20"]
+            cantidades = [
+                fila_datos["Xpectra 10"],
+                fila_datos["Xatiplex 5"],
+                fila_datos["Xatiplex 10"],
+                fila_datos["Xatiplex 15"],
+                fila_datos["Xatiplex 20"]
+            ]
             
-            productos_lista.append("Xpectra 10")
-            cantidades.append(f"{fila_datos['Xpectra 10']}")
-            
-            productos_lista.append("Xatiplex 5")
-            cantidades.append(f"{fila_datos['Xatiplex 5']}")
-            
-            productos_lista.append("Xatiplex 10")
-            cantidades.append(f"{fila_datos['Xatiplex 10']}")
-            
-            productos_lista.append("Xatiplex 15")
-            cantidades.append(f"{fila_datos['Xatiplex 15']}")
-            
-            productos_lista.append("Xatiplex 20")
-            cantidades.append(f"{fila_datos['Xatiplex 20']}")
-            
+            # Crear DataFrame
             df_vertical = pd.DataFrame({
                 "Producto": productos_lista,
                 "Cantidad por toma": cantidades
             })
             
+            # Mostrar tabla
             st.dataframe(
                 df_vertical,
                 use_container_width=True,
                 hide_index=True,
                 column_config={
-                    "Producto": st.column_config.TextColumn(
-                        "Producto",
-                        width="medium"
-                    ),
-                    "Cantidad por toma": st.column_config.TextColumn(
-                        "Cantidad por toma",
-                        width="medium"
-                    )
+                    "Producto": st.column_config.TextColumn("Producto", width="medium"),
+                    "Cantidad por toma": st.column_config.TextColumn("Cantidad por toma", width="medium")
                 }
             )
             
-            # Resaltar producto seleccionado
+            # Resaltar el producto seleccionado en la fila
             producto_seleccionado = pauta['producto']
             st.markdown(f"""
             <div style="background-color: #fff3e0; padding: 10px; border-radius: 5px; border-left: 5px solid #FF9800; margin-top: 10px;">
@@ -382,37 +386,6 @@ with tab1:
                 <strong>{fila_datos[producto_seleccionado]}</strong>
             </div>
             """, unsafe_allow_html=True)
-        
-        # Tabla de titulación
-        with st.expander("Ver esquema de titulación sugerido"):
-            st.markdown("**Titulación semanal (Epidiolex):**")
-            
-            tiene_gotas = "dosis_por_toma_gotas" in pauta
-            datos_titulacion = []
-            for semana in range(1, 5):
-                dosis_semana = min(pauta['dosis_por_kg'], 2.5 * semana)
-                mg_diarios = peso * dosis_semana
-                
-                if tiene_gotas:
-                    gotas_por_toma = (mg_diarios / tomas_por_dia) / calculadora.mg_por_gota
-                    datos_titulacion.append({
-                        "Semana": f"Semana {semana}",
-                        "Dosis (mg/kg/día)": round(dosis_semana, 1),
-                        "mg/día": round(mg_diarios, 1),
-                        "ml/toma": round((mg_diarios / tomas_por_dia) / calculadora.mg_por_ml, 3),
-                        "Gotas/toma": round(gotas_por_toma, 1)
-                    })
-                else:
-                    datos_titulacion.append({
-                        "Semana": f"Semana {semana}",
-                        "Dosis (mg/kg/día)": round(dosis_semana, 1),
-                        "mg/día": round(mg_diarios, 1),
-                        "ml/toma": round((mg_diarios / tomas_por_dia) / calculadora.mg_por_ml, 3),
-                        "Gotas/toma": "N/A (jeringa)"
-                    })
-            
-            df_titulacion = pd.DataFrame(datos_titulacion)
-            st.dataframe(df_titulacion, use_container_width=True, hide_index=True)
         
         # Recomendaciones
         st.divider()
