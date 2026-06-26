@@ -36,7 +36,9 @@ st.markdown("""
     .main-header h1 {
         color: #2E7D32;
         margin: 0;
-        font-size: 2rem;
+        font-size: 2.5rem;
+        font-weight: bold;
+        line-height: 60px;
     }
     .main-header .subtitle {
         color: #666;
@@ -84,15 +86,54 @@ st.markdown("""
     }
     .product-image-container {
         text-align: center;
-        padding: 10px;
-        background: #f5f5f5;
+        padding: 15px 10px 10px 10px;
+        background: #f8f9fa;
         border-radius: 10px;
         margin-bottom: 15px;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+        border: 1px solid #e0e0e0;
     }
     .product-image-container img {
         max-width: 100%;
-        max-height: 200px;
+        max-height: 160px;
+        object-fit: contain;
         border-radius: 5px;
+    }
+    .product-image-container .product-name {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #2E7D32;
+        margin: 8px 0 8px 0;
+    }
+    .product-image-container .product-detail {
+        font-size: 0.85rem;
+        color: #555;
+        margin: 2px 0;
+        padding: 4px 0;
+        border-top: 1px solid #eee;
+    }
+    .product-image-container .product-detail strong {
+        color: #333;
+    }
+    .product-image-container .product-detail .value {
+        color: #2E7D32;
+        font-weight: bold;
+    }
+    /* Títulos de secciones más pequeños */
+    .section-subtitle {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #2E7D32;
+        margin: 12px 0 8px 0;
+    }
+    /* Métricas más pequeñas */
+    .metric-small .stMetric {
+        font-size: 0.9rem;
+    }
+    .metric-small .stMetric .stMetricValue {
+        font-size: 1.2rem !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -100,26 +141,74 @@ st.markdown("""
 # ============================================
 # FUNCIÓN PARA MOSTRAR IMÁGENES
 # ============================================
-def mostrar_imagen(ruta_imagen, caption="", width=None):
-    """Intenta mostrar una imagen con manejo de errores"""
-    try:
+def mostrar_imagen_producto(producto_nombre, mg_por_ml, tiene_gotas, gotas_por_ml=None, mg_por_gota=None):
+    """Muestra la imagen del producto con sus detalles debajo"""
+    
+    # Mapeo de productos a nombres de archivo
+    imagen_map = {
+        "Xpectra 10": "Xpectra_10.webp",
+        "Xatiplex 5": "xatiplex_5.webp",
+        "Xatiplex 10": "xatiplex_10.webp",
+        "Xatiplex 15": "xatiplex_15.webp",
+        "Xatiplex 20": "xatiplex_20.webp"
+    }
+    
+    # Obtener el nombre del archivo
+    nombre_archivo = imagen_map.get(producto_nombre)
+    
+    # Iniciar el contenedor
+    st.markdown('<div class="product-image-container">', unsafe_allow_html=True)
+    
+    # Mostrar la imagen con st.image
+    imagen_mostrada = False
+    if nombre_archivo:
+        ruta_imagen = f"assets/images/{nombre_archivo}"
         if os.path.exists(ruta_imagen):
-            if width:
-                st.image(ruta_imagen, caption=caption, width=width)
-            else:
-                st.image(ruta_imagen, caption=caption, use_container_width=True)
-            return True
-        else:
-            st.warning(f"No se encontró la imagen: {ruta_imagen}")
-            return False
-    except Exception as e:
-        st.warning(f"Error al cargar la imagen: {e}")
-        return False
+            try:
+                st.image(ruta_imagen, use_container_width=True)
+                imagen_mostrada = True
+            except Exception as e:
+                pass
+    
+    # Si no se pudo mostrar la imagen, usar emoji
+    if not imagen_mostrada:
+        emoji = '💊' if 'Xpectra' in producto_nombre else '💉'
+        st.markdown(f'<div style="font-size: 3rem; padding: 20px 0;">{emoji}</div>', unsafe_allow_html=True)
+    
+    # Nombre del producto
+    st.markdown(f'<div class="product-name">{producto_nombre}</div>', unsafe_allow_html=True)
+    
+    # Detalles del producto
+    st.markdown(f"""
+        <div class="product-detail">
+            <strong>CBD por ml:</strong> <span class="value">{mg_por_ml:.2f} mg</span>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    if tiene_gotas:
+        st.markdown(f"""
+        <div class="product-detail">
+            <strong>CBD por gota:</strong> <span class="value">{mg_por_gota:.3f} mg</span>
+        </div>
+        <div class="product-detail">
+            <strong>Gotas por ml:</strong> <span class="value">{gotas_por_ml} gotas</span>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <div class="product-detail">
+            <span style="color: #666; font-size: 0.85rem;">💉 Administración con jeringa</span>
+        </div>
+        <div class="product-detail">
+            <span style="color: #666; font-size: 0.85rem;">No aplican gotas</span>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================
 # LOGO Y CABECERA
 # ============================================
-# Intentar mostrar el logo
 col_logo, col_title = st.columns([1, 5])
 with col_logo:
     # Probar diferentes nombres de logo
@@ -131,7 +220,7 @@ with col_logo:
     logo_cargado = False
     for path in logo_paths:
         if os.path.exists(path):
-            st.image(path, width=80)
+            st.image(path, width=70)
             logo_cargado = True
             break
     if not logo_cargado:
@@ -257,46 +346,21 @@ with tab1:
         st.header("Producto seleccionado")
         
         if producto:
-            # Mostrar foto del producto según selección
-            if "Xpectra" in producto_nombre:
-                st.markdown("""
-                <div class="product-image-container">
-                    <p style="font-size: 1.2rem; font-weight: bold;">Xpectra 10</p>
-                </div>
-                """, unsafe_allow_html=True)
-                # Intentar cargar la imagen
-                if not mostrar_imagen("assets/images/Xpectra_10.webp", "Xpectra 10"):
-                    st.markdown("""
-                    <div style="text-align: center; padding: 20px; background: #f5f5f5; border-radius: 10px; margin-bottom: 15px;">
-                        <p style="font-size: 3rem; margin: 0;">💊</p>
-                        <p style="margin: 5px 0 0 0; font-weight: bold;">Xpectra 10</p>
-                        <p style="font-size: 0.8rem; color: #666;">10% - Full Spectrum</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-            else:
-                st.markdown("""
-                <div class="product-image-container">
-                    <p style="font-size: 1.2rem; font-weight: bold;">Xatiplex</p>
-                </div>
-                """, unsafe_allow_html=True)
-                # Intentar cargar la imagen
-                if not mostrar_imagen("assets/images/xatiplex_5.webp", "Xatiplex"):
-                    st.markdown("""
-                    <div style="text-align: center; padding: 20px; background: #f5f5f5; border-radius: 10px; margin-bottom: 15px;">
-                        <p style="font-size: 3rem; margin: 0;">💉</p>
-                        <p style="margin: 5px 0 0 0; font-weight: bold;">Xatiplex</p>
-                        <p style="font-size: 0.8rem; color: #666;">5%-20% - Isolado</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-            
+            # Calcular información del producto
             calculadora = CalculadoraCBD(producto)
-            st.metric("CBD por ml", f"{calculadora.mg_por_ml:.2f} mg")
+            mg_por_ml = calculadora.mg_por_ml
+            tiene_gotas = calculadora.mg_por_gota is not None
+            mg_por_gota = calculadora.mg_por_gota if tiene_gotas else None
+            gotas_por_ml = producto.gotas_por_ml if tiene_gotas else None
             
-            if calculadora.mg_por_gota:
-                st.metric("CBD por gota", f"{calculadora.mg_por_gota:.3f} mg")
-                st.metric("Gotas por ml", f"{producto.gotas_por_ml} gotas")
-            else:
-                st.info("Administración con jeringa - No aplican gotas")
+            # Mostrar la imagen del producto con sus detalles
+            mostrar_imagen_producto(
+                producto_nombre, 
+                mg_por_ml, 
+                tiene_gotas,
+                gotas_por_ml,
+                mg_por_gota
+            )
     
     # Calcular y mostrar resultados
     if peso > 0 and producto:
@@ -315,7 +379,7 @@ with tab1:
         st.header("Pauta de Administración")
         
         # ============================================
-        # RECUADRO VERDE - Mensaje principal
+        # RECUADRO VERDE - Mensaje principal (grande)
         # ============================================
         tiene_gotas = "dosis_por_toma_gotas" in pauta
         
@@ -344,56 +408,56 @@ with tab1:
         """, unsafe_allow_html=True)
         
         # ============================================
-        # INFORMACIÓN DETALLADA (debajo del recuadro)
+        # INFORMACIÓN DETALLADA (más pequeña)
         # ============================================
-        st.subheader("Detalles de la Dosis")
+        st.markdown('<p class="section-subtitle">Detalles de la Dosis</p>', unsafe_allow_html=True)
         
         col1, col2, col3 = st.columns(3)
         with col1:
             st.metric(
                 "Dosis por kg",
-                f"{pauta['dosis_por_kg']:.1f} mg/kg/día",
-                help="Dosis basada en el peso del paciente"
+                f"{pauta['dosis_por_kg']:.1f}",
+                help="mg/kg/día"
             )
         with col2:
             st.metric(
                 "Dosis diaria total",
-                f"{pauta['dosis_diaria_mg']:.1f} mg",
-                help="Cantidad total de CBD por día"
+                f"{pauta['dosis_diaria_mg']:.1f}",
+                help="mg/día"
             )
         with col3:
             st.metric(
                 "Dosis por toma",
-                f"{pauta['dosis_por_toma_mg']:.2f} mg",
-                help=f"{tomas_por_dia} veces al día"
+                f"{pauta['dosis_por_toma_mg']:.2f}",
+                help="mg por toma"
             )
         
         # Mostrar Administración
-        st.subheader("Detalles de Administración")
+        st.markdown('<p class="section-subtitle">Detalles de Administración</p>', unsafe_allow_html=True)
         col1, col2, col3 = st.columns(3)
         with col1:
             st.metric(
                 "Volumen por toma",
-                f"{pauta['dosis_por_toma_ml']:.3f} ml",
-                help="Volumen en ml por administración"
+                f"{pauta['dosis_por_toma_ml']:.3f}",
+                help="ml"
             )
         with col2:
             if tiene_gotas:
                 st.metric(
                     "Gotas por toma",
-                    f"{pauta['dosis_por_toma_gotas']:.1f} gotas",
-                    help="Si usa Xpectra 10 (gotero)"
+                    f"{pauta['dosis_por_toma_gotas']:.1f}",
+                    help="gotas"
                 )
             else:
                 st.metric(
                     "Volumen por toma",
-                    f"{pauta['dosis_por_toma_ml']:.3f} ml",
-                    help="Si usa Xatiplex (jeringa)"
+                    f"{pauta['dosis_por_toma_ml']:.3f}",
+                    help="ml"
                 )
         with col3:
             st.metric(
                 "Tomas por día",
-                f"{tomas_por_dia} veces",
+                f"{tomas_por_dia}",
                 help=f"Cada {24/tomas_por_dia:.0f} horas"
             )
         
