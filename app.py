@@ -11,6 +11,7 @@ from calculos import CalculadoraCBD, validar_dosis
 from receta import generar_receta_html
 from exportar_pdf import generar_pdf_bytes
 import os
+import math
 
 # Configuración de la página
 st.set_page_config(
@@ -160,7 +161,6 @@ def mostrar_imagen_producto(producto_nombre, mg_por_ml, tiene_gotas, gotas_por_m
         ruta_imagen = f"assets/images/{nombre_archivo}"
         if os.path.exists(ruta_imagen):
             try:
-                # Todas las imágenes con el mismo tamaño
                 st.image(ruta_imagen, width=180)
                 imagen_mostrada = True
             except Exception as e:
@@ -431,20 +431,27 @@ with tab1:
         # ============================================
         st.markdown('<p class="section-subtitle">Detalles de la Dosis</p>', unsafe_allow_html=True)
         
-        col1, col2, col3 = st.columns(3)
+        # Mostrar 4 columnas en lugar de 3
+        col1, col2, col3, col4 = st.columns(4)
         with col1:
             st.metric(
-                "Dosis por kg",
+                "Dosis por kg/día",
                 f"{pauta['dosis_por_kg']:.1f}",
                 help="mg/kg/día"
             )
         with col2:
             st.metric(
-                "Dosis diaria total",
+                "Dosis total diaria",
                 f"{pauta['dosis_diaria_mg']:.1f}",
                 help="mg/día"
             )
         with col3:
+            st.metric(
+                "Nro de tomas",
+                f"{tomas_por_dia}",
+                help="veces al día"
+            )
+        with col4:
             st.metric(
                 "Dosis por toma",
                 f"{pauta['dosis_por_toma_mg']:.2f}",
@@ -454,30 +461,36 @@ with tab1:
         # Mostrar Administración
         st.markdown('<p class="section-subtitle">Detalles de Administración</p>', unsafe_allow_html=True)
         
-        # Calcular dosis por envase
+        # Calcular dosis por envase (redondeado a la baja)
         volumen_envase = st.session_state.volumen_envase
         ml_por_toma = pauta['dosis_por_toma_ml']
-        dosis_por_envase = volumen_envase / ml_por_toma if ml_por_toma > 0 else 0
+        dosis_por_envase = math.floor(volumen_envase / ml_por_toma) if ml_por_toma > 0 else 0
+        
+        # Formatear volumen con coma decimal
+        ml_por_toma_str = f"{ml_por_toma:.2f}".replace('.', ',')
+        
+        # Calcular gotas totales por toma (ya está en pauta)
+        gotas_por_toma = pauta['dosis_por_toma_gotas'] if tiene_gotas else None
         
         col1, col2, col3, col4 = st.columns(4)
         with col1:
             st.metric(
                 "Volumen por toma",
-                f"{ml_por_toma:.3f}",
-                help="ml"
+                f"{ml_por_toma_str} mL",
+                help="ml por toma"
             )
         with col2:
             if tiene_gotas:
                 st.metric(
                     "Gotas por toma",
-                    f"{pauta['dosis_por_toma_gotas']:.1f}",
-                    help="gotas"
+                    f"{gotas_por_toma:.1f}",
+                    help="gotas por toma"
                 )
             else:
                 st.metric(
                     "Volumen por toma",
-                    f"{ml_por_toma:.3f}",
-                    help="ml"
+                    f"{ml_por_toma_str} mL",
+                    help="ml por toma"
                 )
         with col3:
             st.metric(
@@ -488,8 +501,8 @@ with tab1:
         with col4:
             st.metric(
                 "Dosis por envase",
-                f"{dosis_por_envase:.0f}",
-                help=f"dosis en envase de {volumen_envase} mL"
+                f"{dosis_por_envase}",
+                help=f"dosis completas en envase de {volumen_envase} mL"
             )
         
         # ============================================
