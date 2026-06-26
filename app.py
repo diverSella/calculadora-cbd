@@ -11,6 +11,7 @@ from calculos import CalculadoraCBD, validar_dosis
 from comparativa import tabla_equivalencias
 from receta import generar_receta_html
 from exportar_pdf import generar_pdf_bytes
+import os
 
 # Configuración de la página
 st.set_page_config(
@@ -43,17 +44,6 @@ st.markdown("""
         font-size: 1rem;
         margin: 0;
     }
-    .product-card {
-        background-color: #f8f9fa;
-        padding: 15px;
-        border-radius: 10px;
-        border-left: 5px solid #2E7D32;
-        margin-bottom: 15px;
-    }
-    .product-card img {
-        max-height: 80px;
-        margin-right: 15px;
-    }
     .highlight-product {
         background-color: #e8f5e9;
         padding: 15px;
@@ -69,16 +59,34 @@ st.markdown("""
         border-top: 1px solid #ddd;
         margin-top: 30px;
     }
+    .equivalencia-resaltada {
+        background-color: #fff3e0;
+        padding: 10px;
+        border-radius: 5px;
+        border-left: 5px solid #FF9800;
+        margin-top: 10px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# Logo y título en cabecera - Usando imágenes locales
+# Función para mostrar imágenes con fallback
+def mostrar_imagen(url_local, url_web, alt_text):
+    """Intenta mostrar una imagen local, si no, usa la URL web"""
+    if os.path.exists(url_local):
+        st.image(url_local, caption=alt_text, use_container_width=True)
+    else:
+        st.markdown(f"""
+        <div style="text-align: center; padding: 20px; background: #f5f5f5; border-radius: 10px; margin-bottom: 15px;">
+            <p style="color: #999; font-size: 0.9rem;">{alt_text}</p>
+            <p style="font-weight: bold; font-size: 1.2rem;">{alt_text}</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+# Logo y título en cabecera
 st.markdown("""
 <div class="main-header">
-    <img src="https://greenmed.uy/images/logo.png" alt="GreenMed Logo" 
-         onerror="this.onerror=null; this.src='https://greenmed.uy/logo.png';">
     <div>
-        <h1>Calculadora de Dosis de CBD</h1>
+        <h1>🌿 Calculadora de Dosis de CBD</h1>
         <p class="subtitle">Laboratorios Greenmed - Basado en prospecto de Xpectra/Xatiplex</p>
     </div>
 </div>
@@ -200,21 +208,17 @@ with tab1:
             if "Xpectra" in producto_nombre:
                 st.markdown("""
                 <div style="text-align: center; padding: 10px; background: #f5f5f5; border-radius: 10px; margin-bottom: 15px;">
-                    <img src="https://greenmed.uy/images/xpectra-10.png" 
-                         alt="Xpectra 10" 
-                         style="max-width: 100%; max-height: 150px;"
-                         onerror="this.onerror=null; this.src='https://greenmed.uy/xpectra.png';">
+                    <p style="font-size: 3rem; margin: 0;">💊</p>
                     <p style="margin: 5px 0 0 0; font-weight: bold;">Xpectra 10</p>
+                    <p style="font-size: 0.8rem; color: #666;">Gotero - 32 gotas/ml</p>
                 </div>
                 """, unsafe_allow_html=True)
             else:
                 st.markdown("""
                 <div style="text-align: center; padding: 10px; background: #f5f5f5; border-radius: 10px; margin-bottom: 15px;">
-                    <img src="https://greenmed.uy/images/xatiplex.png" 
-                         alt="Xatiplex" 
-                         style="max-width: 100%; max-height: 150px;"
-                         onerror="this.onerror=null; this.src='https://greenmed.uy/xatiplex.png';">
+                    <p style="font-size: 3rem; margin: 0;">💉</p>
                     <p style="margin: 5px 0 0 0; font-weight: bold;">Xatiplex</p>
+                    <p style="font-size: 0.8rem; color: #666;">Jeringa</p>
                 </div>
                 """, unsafe_allow_html=True)
             
@@ -234,9 +238,9 @@ with tab1:
         es_valido, mensaje_validacion = validar_dosis(dosis_por_kg, peso)
         
         if not es_valido:
-            st.error(f" {mensaje_validacion}")
+            st.error(f"⚠️ {mensaje_validacion}")
         else:
-            st.success(f" {mensaje_validacion}")
+            st.success(f"✅ {mensaje_validacion}")
         
         calculadora = CalculadoraCBD(producto)
         pauta = calculadora.calcular_pauta_completa(peso, dosis_por_kg)
@@ -301,12 +305,11 @@ with tab1:
         st.markdown(f"""
         <div class="highlight-product">
             <div style="display: flex; align-items: center; gap: 15px;">
-                <img src="https://greenmed.uy/images/{'xpectra-10' if 'Xpectra' in producto_nombre else 'xatiplex'}.png" 
-                     alt="{pauta['producto']}" 
-                     style="max-height: 80px;"
-                     onerror="this.onerror=null; this.src='https://greenmed.uy/{'xpectra' if 'Xpectra' in producto_nombre else 'xatiplex'}.png';">
+                <div style="font-size: 3rem;">
+                    {'💊' if 'Xpectra' in producto_nombre else '💉'}
+                </div>
                 <div>
-                    <h3 style="color: #2E7D32; margin: 0;"> {pauta['producto']}</h3>
+                    <h3 style="color: #2E7D32; margin: 0;">✅ {pauta['producto']}</h3>
                     <p style="margin: 5px 0; font-size: 1.1rem;">
                         <strong>Concentración:</strong> {pauta['concentracion']}% | 
                         <strong>Presentación:</strong> {pauta['presentacion']}
@@ -327,25 +330,36 @@ with tab1:
         # Obtener la tabla de equivalencias completa
         df_equivalencias, gotas = tabla_equivalencias()
         
-        # Encontrar la fila correspondiente a la dosis
-        dosis_gotas = None
-        if "dosis_por_toma_gotas" in pauta:
-            dosis_gotas = pauta['dosis_por_toma_gotas']
-        else:
-            xpectra = catalogo.get_producto("Xpectra 10")
-            calc_xpectra = CalculadoraCBD(xpectra)
-            dosis_gotas = calc_xpectra.convertir_a_gotas(pauta['dosis_por_toma_mg'])
+        # DEBUG: Mostrar información para diagnóstico
+        # st.write("DEBUG - Gotas disponibles:", gotas)
+        # st.write("DEBUG - DataFrame:", df_equivalencias)
         
-        # Buscar la fila más cercana en la tabla
+        # Calcular la dosis en gotas de Xpectra
+        xpectra = catalogo.get_producto("Xpectra 10")
+        calc_xpectra = CalculadoraCBD(xpectra)
+        
+        # Obtener la dosis en mg por toma
+        mg_por_toma = pauta['dosis_por_toma_mg']
+        
+        # Convertir a gotas de Xpectra
+        dosis_en_gotas = calc_xpectra.convertir_a_gotas(mg_por_toma)
+        
+        # Buscar la fila más cercana
         fila_cercana = None
-        if dosis_gotas:
+        if dosis_en_gotas:
             for i, gota in enumerate(gotas):
-                if abs(gota - dosis_gotas) < 0.5:
-                    fila_cercana = i
-                    break
-                elif gota > dosis_gotas:
-                    fila_cercana = i
-                    break
+                # Extraer el número de gotas del string (ej: "10 gotas" -> 10)
+                try:
+                    num_gotas = float(gota.split()[0])
+                    if abs(num_gotas - dosis_en_gotas) < 1.5:
+                        fila_cercana = i
+                        break
+                except:
+                    continue
+        
+        # Si no encontró una fila exacta, usar la última fila disponible
+        if fila_cercana is None and len(gotas) > 0:
+            fila_cercana = len(gotas) - 1
         
         if fila_cercana is not None:
             fila_datos = df_equivalencias.iloc[fila_cercana]
@@ -377,15 +391,22 @@ with tab1:
                 }
             )
             
-            # Resaltar el producto seleccionado en la fila
+            # Resaltar el producto seleccionado
             producto_seleccionado = pauta['producto']
             st.markdown(f"""
-            <div style="background-color: #fff3e0; padding: 10px; border-radius: 5px; border-left: 5px solid #FF9800; margin-top: 10px;">
-                <strong> Producto seleccionado:</strong> {producto_seleccionado} 
+            <div class="equivalencia-resaltada">
+                <strong>✅ Producto seleccionado:</strong> {producto_seleccionado} 
                 <span style="color: #FF9800;">➡️</span> 
                 <strong>{fila_datos[producto_seleccionado]}</strong>
             </div>
             """, unsafe_allow_html=True)
+        else:
+            # Fallback: mostrar un mensaje si no se encuentra la fila
+            st.info("No se pudo encontrar la equivalencia exacta. Por favor, revise la tabla completa.")
+            
+            # Mostrar tabla completa como fallback
+            df_equivalencias_fallback = df_equivalencias.copy()
+            st.dataframe(df_equivalencias_fallback, use_container_width=True, hide_index=True)
         
         # Recomendaciones
         st.divider()
@@ -544,7 +565,7 @@ with tab3:
 # Footer
 st.markdown("""
 <div class="footer">
-    <p>Esta herramienta es de apoyo para profesionales de la salud.</p>
+    <p>⚠️ Esta herramienta es de apoyo para profesionales de la salud.</p>
     <p>La decisión final de prescripción es responsabilidad del médico tratante.</p>
     <p>Greenmed | Basado en prospecto de Xpectra/Xatiplex</p>
 </div>
