@@ -135,12 +135,18 @@ st.markdown("""
         color: #2E7D32;
         margin: 12px 0 8px 0;
     }
-    .info-box {
-        background-color: #f0f8ff;
-        padding: 15px;
-        border-radius: 8px;
-        border-left: 5px solid #2196F3;
-        margin: 10px 0;
+    /* Estilos para métricas con texto normal */
+    .metric-normal {
+        font-size: 1rem !important;
+        font-weight: normal !important;
+    }
+    .metric-normal .stMetricValue {
+        font-size: 1rem !important;
+        font-weight: normal !important;
+    }
+    .metric-normal .stMetricLabel {
+        font-size: 0.9rem !important;
+        font-weight: normal !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -424,35 +430,39 @@ with tab1:
         """, unsafe_allow_html=True)
         
         # ============================================
-        # INFORMACIÓN DETALLADA
+        # INFORMACIÓN DETALLADA - CON ESTILO NORMAL
         # ============================================
         st.markdown('<p class="section-subtitle">Detalles de la Dosis</p>', unsafe_allow_html=True)
         
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            st.metric(
-                "Dosis por kg/día",
-                f"{pauta['dosis_por_kg']:.1f}",
-                help="mg/kg/día"
-            )
+            st.markdown(f"""
+            <div style="text-align: center; padding: 8px 4px; background: #f8f9fa; border-radius: 6px; border: 1px solid #e9ecef;">
+                <div style="font-size: 0.8rem; color: #666; margin-bottom: 2px;">Dosis por kg/día</div>
+                <div style="font-size: 1.1rem; font-weight: 500; color: #2E7D32;">{pauta['dosis_por_kg']:.1f} mg/kg/día</div>
+            </div>
+            """, unsafe_allow_html=True)
         with col2:
-            st.metric(
-                "Dosis total diaria",
-                f"{pauta['dosis_diaria_mg']:.1f}",
-                help="mg/día"
-            )
+            st.markdown(f"""
+            <div style="text-align: center; padding: 8px 4px; background: #f8f9fa; border-radius: 6px; border: 1px solid #e9ecef;">
+                <div style="font-size: 0.8rem; color: #666; margin-bottom: 2px;">Dosis total diaria</div>
+                <div style="font-size: 1.1rem; font-weight: 500; color: #2E7D32;">{pauta['dosis_diaria_mg']:.1f} mg/día</div>
+            </div>
+            """, unsafe_allow_html=True)
         with col3:
-            st.metric(
-                "Nro de tomas",
-                f"{tomas_por_dia}",
-                help="veces al día"
-            )
+            st.markdown(f"""
+            <div style="text-align: center; padding: 8px 4px; background: #f8f9fa; border-radius: 6px; border: 1px solid #e9ecef;">
+                <div style="font-size: 0.8rem; color: #666; margin-bottom: 2px;">Nro de tomas</div>
+                <div style="font-size: 1.1rem; font-weight: 500; color: #2E7D32;">{tomas_por_dia} veces/día</div>
+            </div>
+            """, unsafe_allow_html=True)
         with col4:
-            st.metric(
-                "Dosis por toma",
-                f"{pauta['dosis_por_toma_mg']:.2f}",
-                help="mg por toma"
-            )
+            st.markdown(f"""
+            <div style="text-align: center; padding: 8px 4px; background: #f8f9fa; border-radius: 6px; border: 1px solid #e9ecef;">
+                <div style="font-size: 0.8rem; color: #666; margin-bottom: 2px;">Dosis por toma</div>
+                <div style="font-size: 1.1rem; font-weight: 500; color: #2E7D32;">{pauta['dosis_por_toma_mg']:.2f} mg/toma</div>
+            </div>
+            """, unsafe_allow_html=True)
         
         # Mostrar Administración
         st.markdown('<p class="section-subtitle">Detalles de Administración</p>', unsafe_allow_html=True)
@@ -460,42 +470,46 @@ with tab1:
         volumen_envase = st.session_state.volumen_envase
         ml_por_toma = pauta['dosis_por_toma_ml']
         dosis_por_envase = math.floor(volumen_envase / ml_por_toma) if ml_por_toma > 0 else 0
-        
         ml_por_toma_str = f"{ml_por_toma:.2f}".replace('.', ',')
         gotas_por_toma = pauta['dosis_por_toma_gotas'] if tiene_gotas else None
         
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            st.metric(
-                "Volumen por toma",
-                f"{ml_por_toma_str} mL",
-                help="ml por toma"
-            )
+            st.markdown(f"""
+            <div style="text-align: center; padding: 8px 4px; background: #f8f9fa; border-radius: 6px; border: 1px solid #e9ecef;">
+                <div style="font-size: 0.8rem; color: #666; margin-bottom: 2px;">Volumen por toma</div>
+                <div style="font-size: 1.1rem; font-weight: 500; color: #2E7D32;">{ml_por_toma_str} mL/toma</div>
+            </div>
+            """, unsafe_allow_html=True)
         with col2:
             if tiene_gotas:
-                st.metric(
-                    "Gotas por toma",
-                    f"{gotas_por_toma:.1f}",
-                    help="gotas por toma"
-                )
+                st.markdown(f"""
+                <div style="text-align: center; padding: 8px 4px; background: #f8f9fa; border-radius: 6px; border: 1px solid #e9ecef;">
+                    <div style="font-size: 0.8rem; color: #666; margin-bottom: 2px;">Gotas por toma</div>
+                    <div style="font-size: 1.1rem; font-weight: 500; color: #2E7D32;">{gotas_por_toma:.1f} gotas/toma</div>
+                </div>
+                """, unsafe_allow_html=True)
             else:
-                st.metric(
-                    "Volumen por toma",
-                    f"{ml_por_toma_str} mL",
-                    help="ml por toma"
-                )
+                st.markdown(f"""
+                <div style="text-align: center; padding: 8px 4px; background: #f8f9fa; border-radius: 6px; border: 1px solid #e9ecef;">
+                    <div style="font-size: 0.8rem; color: #666; margin-bottom: 2px;">Volumen por toma</div>
+                    <div style="font-size: 1.1rem; font-weight: 500; color: #2E7D32;">{ml_por_toma_str} mL/toma</div>
+                </div>
+                """, unsafe_allow_html=True)
         with col3:
-            st.metric(
-                "Tomas por día",
-                f"{tomas_por_dia}",
-                help=f"Cada {24/tomas_por_dia:.0f} horas"
-            )
+            st.markdown(f"""
+            <div style="text-align: center; padding: 8px 4px; background: #f8f9fa; border-radius: 6px; border: 1px solid #e9ecef;">
+                <div style="font-size: 0.8rem; color: #666; margin-bottom: 2px;">Tomas por día</div>
+                <div style="font-size: 1.1rem; font-weight: 500; color: #2E7D32;">{tomas_por_dia} veces/día</div>
+            </div>
+            """, unsafe_allow_html=True)
         with col4:
-            st.metric(
-                "Dosis por envase",
-                f"{dosis_por_envase}",
-                help=f"dosis completas en envase de {volumen_envase} mL"
-            )
+            st.markdown(f"""
+            <div style="text-align: center; padding: 8px 4px; background: #f8f9fa; border-radius: 6px; border: 1px solid #e9ecef;">
+                <div style="font-size: 0.8rem; color: #666; margin-bottom: 2px;">Dosis por envase</div>
+                <div style="font-size: 1.1rem; font-weight: 500; color: #2E7D32;">{dosis_por_envase} dosis/envase</div>
+            </div>
+            """, unsafe_allow_html=True)
         
         # ============================================
         # TABLA DE EQUIVALENCIAS
