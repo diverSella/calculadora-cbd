@@ -78,6 +78,11 @@ st.markdown("""
         border-top: 1px solid #ddd;
         margin-top: 30px;
     }
+    .footer .credits {
+        font-size: 0.85rem;
+        color: #555;
+        margin-top: 5px;
+    }
     .equivalencia-resaltada {
         background-color: #fff3e0;
         padding: 10px;
@@ -124,12 +129,18 @@ st.markdown("""
         color: #2E7D32;
         font-weight: bold;
     }
-    /* Títulos de secciones más pequeños */
     .section-subtitle {
         font-size: 1rem;
         font-weight: 600;
         color: #2E7D32;
         margin: 12px 0 8px 0;
+    }
+    .info-box {
+        background-color: #f0f8ff;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 5px solid #2196F3;
+        margin: 10px 0;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -140,7 +151,6 @@ st.markdown("""
 def mostrar_imagen_producto(producto_nombre, mg_por_ml, tiene_gotas, gotas_por_ml=None, mg_por_gota=None, volumen=None):
     """Muestra la imagen del producto con sus detalles debajo"""
     
-    # Mapeo de productos a nombres de archivo
     imagen_map = {
         "Xpectra 10": "Xpectra_10.webp",
         "Xatiplex 5": "xatiplex_5.webp",
@@ -149,13 +159,10 @@ def mostrar_imagen_producto(producto_nombre, mg_por_ml, tiene_gotas, gotas_por_m
         "Xatiplex 20": "xatiplex_20.webp"
     }
     
-    # Obtener el nombre del archivo
     nombre_archivo = imagen_map.get(producto_nombre)
     
-    # Iniciar el contenedor
     st.markdown('<div class="product-image-container">', unsafe_allow_html=True)
     
-    # Mostrar la imagen con st.image (tamaño fijo para todas)
     imagen_mostrada = False
     if nombre_archivo:
         ruta_imagen = f"assets/images/{nombre_archivo}"
@@ -166,15 +173,12 @@ def mostrar_imagen_producto(producto_nombre, mg_por_ml, tiene_gotas, gotas_por_m
             except Exception as e:
                 pass
     
-    # Si no se pudo mostrar la imagen, usar emoji
     if not imagen_mostrada:
         emoji = '💊' if 'Xpectra' in producto_nombre else '💉'
         st.markdown(f'<div style="font-size: 2.5rem; padding: 10px 0;">{emoji}</div>', unsafe_allow_html=True)
     
-    # Nombre del producto
     st.markdown(f'<div class="product-name">{producto_nombre}</div>', unsafe_allow_html=True)
     
-    # Detalles del producto
     st.markdown(f"""
         <div class="product-detail">
             <strong>CBD por ml:</strong> <span class="value">{mg_por_ml:.2f} mg</span>
@@ -200,7 +204,6 @@ def mostrar_imagen_producto(producto_nombre, mg_por_ml, tiene_gotas, gotas_por_m
         </div>
         """, unsafe_allow_html=True)
     
-    # Mostrar volumen seleccionado
     if volumen:
         st.markdown(f"""
         <div class="product-detail">
@@ -215,7 +218,6 @@ def mostrar_imagen_producto(producto_nombre, mg_por_ml, tiene_gotas, gotas_por_m
 # ============================================
 col_logo, col_title = st.columns([1, 5])
 with col_logo:
-    # Probar diferentes nombres de logo
     logo_paths = [
         "assets/images/Logo empresa.JPG",
         "assets/images/logo-empresa.JPG",
@@ -286,7 +288,6 @@ with st.sidebar:
         with col2:
             st.metric("Presentación", producto.presentacion)
         
-        # Selector de volumen del envase
         if producto.volumenes_disponibles:
             st.subheader("Volumen del envase")
             volumen_envase = st.radio(
@@ -321,11 +322,11 @@ with tab1:
         
         dosis_tipo = st.radio(
             "Tipo de dosis",
-            ["Dosis estándar (Epidiolex)", "Dosis personalizada"],
+            ["Dosis estándar", "Dosis personalizada"],
             horizontal=True
         )
         
-        if dosis_tipo == "Dosis estándar (Epidiolex)":
+        if dosis_tipo == "Dosis estándar":
             dosis_por_kg = st.select_slider(
                 "Dosis (mg/kg/día)",
                 options=[2.5, 5.0, 10.0, 15.0, 20.0],
@@ -333,7 +334,7 @@ with tab1:
             )
             
             st.info("""
-            **Rango terapéutico Epidiolex:**
+            **Rango terapéutico recomendado:**
             - Dosis inicial: 2.5 mg/kg/día
             - Dosis de mantenimiento: 5-10 mg/kg/día
             - Dosis máxima: 20 mg/kg/día
@@ -364,14 +365,12 @@ with tab1:
         st.header("Producto seleccionado")
         
         if producto:
-            # Calcular información del producto
             calculadora = CalculadoraCBD(producto)
             mg_por_ml = calculadora.mg_por_ml
             tiene_gotas = calculadora.mg_por_gota is not None
             mg_por_gota = calculadora.mg_por_gota if tiene_gotas else None
             gotas_por_ml = producto.gotas_por_ml if tiene_gotas else None
             
-            # Mostrar la imagen del producto con sus detalles
             mostrar_imagen_producto(
                 producto_nombre, 
                 mg_por_ml, 
@@ -398,17 +397,15 @@ with tab1:
         st.header("Pauta de Administración")
         
         # ============================================
-        # RECUADRO VERDE - Mensaje principal (grande)
+        # RECUADRO VERDE - Mensaje principal
         # ============================================
         tiene_gotas = "dosis_por_toma_gotas" in pauta
         
-        # Construir el mensaje principal
         if tiene_gotas:
             mensaje_dosis = f"{pauta['dosis_por_toma_gotas']:.1f} gotas"
         else:
             mensaje_dosis = f"{pauta['dosis_por_toma_ml']:.1f} ml"
         
-        # Texto de frecuencia
         if tomas_por_dia == 1:
             frecuencia = "una vez al día"
         elif tomas_por_dia == 2:
@@ -427,11 +424,10 @@ with tab1:
         """, unsafe_allow_html=True)
         
         # ============================================
-        # INFORMACIÓN DETALLADA (más pequeña)
+        # INFORMACIÓN DETALLADA
         # ============================================
         st.markdown('<p class="section-subtitle">Detalles de la Dosis</p>', unsafe_allow_html=True)
         
-        # Mostrar 4 columnas en lugar de 3
         col1, col2, col3, col4 = st.columns(4)
         with col1:
             st.metric(
@@ -461,15 +457,11 @@ with tab1:
         # Mostrar Administración
         st.markdown('<p class="section-subtitle">Detalles de Administración</p>', unsafe_allow_html=True)
         
-        # Calcular dosis por envase (redondeado a la baja)
         volumen_envase = st.session_state.volumen_envase
         ml_por_toma = pauta['dosis_por_toma_ml']
         dosis_por_envase = math.floor(volumen_envase / ml_por_toma) if ml_por_toma > 0 else 0
         
-        # Formatear volumen con coma decimal
         ml_por_toma_str = f"{ml_por_toma:.2f}".replace('.', ',')
-        
-        # Calcular gotas totales por toma (ya está en pauta)
         gotas_por_toma = pauta['dosis_por_toma_gotas'] if tiene_gotas else None
         
         col1, col2, col3, col4 = st.columns(4)
@@ -506,19 +498,15 @@ with tab1:
             )
         
         # ============================================
-        # TABLA DE EQUIVALENCIAS - CALCULADA DINÁMICAMENTE
+        # TABLA DE EQUIVALENCIAS
         # ============================================
         st.divider()
         st.subheader("Equivalencias para esta dosis")
         st.markdown("Si el paciente no puede comprar el producto seleccionado, estas son las dosis equivalentes con otros productos:")
         
-        # Obtener la dosis por toma en mg
         mg_por_toma = pauta['dosis_por_toma_mg']
-        
-        # Crear diccionario con todos los productos y sus equivalencias
         productos_equivalencias = {}
         
-        # Xpectra 10
         xpectra = catalogo.get_producto("Xpectra 10")
         calc_xpectra = CalculadoraCBD(xpectra)
         gotas_xpectra = calc_xpectra.convertir_a_gotas(mg_por_toma)
@@ -527,33 +515,27 @@ with tab1:
         else:
             productos_equivalencias["Xpectra 10"] = f"{calc_xpectra.convertir_a_ml(mg_por_toma):.3f} ml"
         
-        # Xatiplex 5
         xatiplex_5 = catalogo.get_producto("Xatiplex 5")
         calc_5 = CalculadoraCBD(xatiplex_5)
         productos_equivalencias["Xatiplex 5"] = f"{calc_5.convertir_a_ml(mg_por_toma):.3f} ml"
         
-        # Xatiplex 10
         xatiplex_10 = catalogo.get_producto("Xatiplex 10")
         calc_10 = CalculadoraCBD(xatiplex_10)
         productos_equivalencias["Xatiplex 10"] = f"{calc_10.convertir_a_ml(mg_por_toma):.3f} ml"
         
-        # Xatiplex 15
         xatiplex_15 = catalogo.get_producto("Xatiplex 15")
         calc_15 = CalculadoraCBD(xatiplex_15)
         productos_equivalencias["Xatiplex 15"] = f"{calc_15.convertir_a_ml(mg_por_toma):.3f} ml"
         
-        # Xatiplex 20
         xatiplex_20 = catalogo.get_producto("Xatiplex 20")
         calc_20 = CalculadoraCBD(xatiplex_20)
         productos_equivalencias["Xatiplex 20"] = f"{calc_20.convertir_a_ml(mg_por_toma):.3f} ml"
         
-        # Crear DataFrame
         df_equivalencias = pd.DataFrame({
             "Producto": list(productos_equivalencias.keys()),
             "Cantidad por toma": list(productos_equivalencias.values())
         })
         
-        # Mostrar tabla
         st.dataframe(
             df_equivalencias,
             use_container_width=True,
@@ -564,7 +546,6 @@ with tab1:
             }
         )
         
-        # Resaltar el producto seleccionado
         producto_seleccionado = pauta['producto']
         cantidad_seleccionada = productos_equivalencias[producto_seleccionado]
         st.markdown(f"""
@@ -605,7 +586,6 @@ with tab2:
     Útil para convertir rápidamente entre productos.
     """)
     
-    # Mostrar tabla de equivalencias completa
     from comparativa import tabla_equivalencias
     df_equivalencias_completa, gotas = tabla_equivalencias()
     
@@ -732,11 +712,16 @@ with tab3:
     else:
         st.warning("Primero complete los datos del paciente y seleccione un producto.")
 
-# Footer
+# ============================================
+# FOOTER CON CRÉDITOS
+# ============================================
 st.markdown("""
 <div class="footer">
     <p>⚠️ Esta herramienta es de apoyo para profesionales de la salud.</p>
     <p>La decisión final de prescripción es responsabilidad del médico tratante.</p>
     <p>Greenmed | Basado en prospecto de Xpectra/Xatiplex</p>
+    <div class="credits">
+        <strong>Desarrollado por:</strong> Dr. Diver Sellanes &amp; Qco. Rodrigo Lucero
+    </div>
 </div>
 """, unsafe_allow_html=True)
